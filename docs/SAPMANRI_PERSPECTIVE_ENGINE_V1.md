@@ -2,7 +2,7 @@
 
 - 문서 경로: `docs/SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 - 문서 성격: 구현 전 설계 정본
-- 버전: V1.6
+- 버전: V1.7
 - 상태: 정본 확정 (2026-07-18)
 - 저장 위치: `sapmanri/mimesis-perspective-engine` `docs/` — 정본 위치.
 
@@ -15,6 +15,7 @@
 - V1.4 (2026-07-18): 1.4의 스택을 계층 모델 Layer 0~5로 확정 (Safety & Truth Contract, System Prompt Generator 명시). 사실성·안전·모델 정책의 Genome 배제 규율 명문화. `SAPMANRI_GENOME_SPEC_V1.md` 초안 작성 시작.
 - V1.5 (2026-07-18): 계층 모델 재확정 — **Layer 0 Observation / 1 Genome Traits(불변) / 2 Perception Engine / 3 Safety & Truth / 4 Prompt Generator / 5 LLM**. Genome은 규칙이 아니라 **형질(Trait)의 집합**이며 불변. Rule·Anti Pattern·Mutation은 Layer 2로 이관 (`SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md` 신설). 18절 로드맵 6단계로 갱신.
 - V1.6 (2026-07-18): **Genome Edition 1 확정** (게놈 설계자 판정). Edition/Version 표기 규약(Genome만 Edition, 발견으로만 증가), 내부 호칭 Genome/Engine/Prompt 기록.
+- V1.7 (2026-07-18): **프롬프트는 창작물이 아니라 파생물** 원칙 명문화. 로드맵에 03 `SAPMANRI_PROMPT_BLUEPRINT_V1.md`(사람이 읽는 설계) 삽입, 04는 `CLAUDE_SYSTEM_PROMPT_V1.md`(첫 번째 구현체)로 개명 — 총 7단계. Genome 프로젝트 종료 선언(헌법 제정): 이후 모든 문서는 헌법을 만드는 문서가 아니라 구현하는 문서.
 
 ---
 
@@ -112,7 +113,12 @@ Genome Spec(`SAPMANRI_GENOME_SPEC_V1.md`)은 형질만, Engine Spec(`SAPMANRI_PE
 
 표기 규약: **Genome만 Edition을 갖는다** — Edition은 고침이 아니라 새 형질의 발견으로만 올라간다. Engine·Prompt·API는 Version(v1, v2, …)을 갖는다. Genome Edition 1은 2026-07-18 확정되었다.
 
+> A genome is not written. It is discovered.
+> Edition 2 is not planned. It is discovered.
+
 내부 호칭: 일상 대화에서는 **Genome / Engine / Prompt** 세 단어로 부른다. Genome이 하나이므로 Engine도 하나다 — Perception을 매번 붙이지 않는다. 문서명은 유지한다.
+
+프롬프트의 지위: **Prompt는 창작물이 아니라 파생물이다.** 사람이 읽는 설계(Prompt Blueprint)에서 기계가 읽는 각 모델 프롬프트가 번역·생성된다. 전체 흐름은 Genome(철학) → Engine(실행) → Blueprint(설계) → Prompt(번역) → LLM이다. Claude 프롬프트는 Blueprint의 첫 번째 구현체이고, GPT는 두 번째, Gemini는 세 번째가 된다.
 
 이 분리에서 나오는 원칙이 **모델 독립성(Model-agnostic)**이다. Genome은 AI 프롬프트가 아니라 철학과 규칙의 명세로 작성한다. 그 명세 위에서 Claude용, GPT용, Gemini용, 로컬 LLM용 System Prompt를 각각 생성한다. 모델이 바뀌어도 Genome은 건드리지 않고 프롬프트만 새로 생성한다.
 
@@ -1242,16 +1248,19 @@ UI까지 과도하게 감성적으로 만들지 않는다.
 02. SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md
     Trait를 Rule로 실행하는 명세 — Anti Pattern·Mutation은 여기 있다.
         ↓
-03. SAPMANRI_SYSTEM_PROMPT_V1.md
-    Claude용 구현 명세 — Trait와 Rule에서 생성
+03. SAPMANRI_PROMPT_BLUEPRINT_V1.md
+    사람이 읽는 설계 — 파이프라인 5단계와 Prompt AST. 모델 독립.
         ↓
-04. SAPMANRI_EVALUATION_SPEC_V1.md
+04. CLAUDE_SYSTEM_PROMPT_V1.md
+    기계가 읽는 번역 — Blueprint의 첫 번째 구현체. GPT는 두 번째.
+        ↓
+05. SAPMANRI_EVALUATION_SPEC_V1.md
     20문항 + 비공개 보충 세트 + 채점 기준 + 회귀 테스트
         ↓
-05. SAPMANRI_API_SPEC_V1.md
+06. SAPMANRI_API_SPEC_V1.md
     호출 방식 — 11절(비용·남용 방지)을 구체화
         ↓
-06. MVP 구현
+07. MVP 구현
 ```
 
 순서의 이유: 지금까지는 "Genome → Prompt"로 생각했지만, 실제 구조는 다음이어야 한다.
@@ -1260,6 +1269,6 @@ UI까지 과도하게 감성적으로 만들지 않는다.
 Genome Spec → Prompt Generator → System Prompt → LLM
 ```
 
-앞으로 이 엔진은 Claude만 쓰지 않을 가능성이 크다. GPT도, Gemini도, 로컬 LLM도 같은 Genome을 사용할 수 있어야 한다. 따라서 Genome Spec은 특정 모델의 프롬프트 문법에 의존하지 않는 형질의 명세로 먼저 확정하고, 각 모델용 System Prompt는 Trait와 Rule에서 생성한다. 모델이 바뀌면 03(필요하면 02의 Rule)만 다시 만들고 01은 건드리지 않는다.
+앞으로 이 엔진은 Claude만 쓰지 않을 가능성이 크다. GPT도, Gemini도, 로컬 LLM도 같은 Genome을 사용할 수 있어야 한다. 따라서 Genome은 형질의 명세로 확정되었고(01), Blueprint는 모델 독립 설계로 남는다(03). 모델이 바뀌면 04의 번역만 새로 만들고 01~03은 건드리지 않는다.
 
 이것이 MIMESIS를 하나의 제품이 아니라 플랫폼으로 가져가는 구조다.
