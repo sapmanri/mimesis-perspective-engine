@@ -1,4 +1,4 @@
-// 만리서재 — 프론트엔드. AI/모델 언급 없음. 상태는 이 페이지 안에서만 산다.
+// 만리서재 — 프론트엔드. AI/모델 언급 없음. 저장 UI 없음 — 기록은 서재의 호흡이다.
 const LOADING_LINES = [
   "책장을 한 장 넘기고 있습니다.",
   "조용히 살펴보고 있습니다.",
@@ -13,12 +13,43 @@ const loading = $("loading");
 const error = $("error");
 const paper = $("paper");
 const paperQuestion = $("paper-question");
+const layerPlace = $("layer-place");
+const layerView = $("layer-view");
 const paperAnswer = $("paper-answer");
-const consent = $("consent");
-const archivedNote = $("archived-note");
 const again = $("again");
 
-let currentUuid = null;
+const toParagraphs = (text) =>
+  text
+    .split(/\n{2,}/)
+    .filter((s) => s.trim())
+    .map((para) => {
+      const p = document.createElement("p");
+      p.textContent = para.replace(/\n/g, " ");
+      return p;
+    });
+
+// 세 층: 질문의 자리 --- 관점 --- 산문. 층이 없으면(사실·고위험) 산문만.
+function renderAnswer(answer) {
+  const parts = answer
+    .split(/\n\s*---\s*\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  layerPlace.hidden = true;
+  layerView.hidden = true;
+
+  let prose = parts[parts.length - 1] ?? answer;
+  if (parts.length >= 3) {
+    layerPlace.replaceChildren(...toParagraphs(parts[0]));
+    layerPlace.hidden = false;
+    layerView.replaceChildren(...toParagraphs(parts[1]));
+    layerView.hidden = false;
+  } else if (parts.length === 2) {
+    layerPlace.replaceChildren(...toParagraphs(parts[0]));
+    layerPlace.hidden = false;
+  }
+  paperAnswer.replaceChildren(...toParagraphs(prose));
+}
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -41,20 +72,8 @@ form.addEventListener("submit", async (e) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "답을 받지 못했습니다.");
 
-    currentUuid = data.uuid;
     paperQuestion.textContent = question;
-    paperAnswer.replaceChildren(
-      ...data.answer
-        .split(/\n{2,}/)
-        .map((para) => {
-          const p = document.createElement("p");
-          p.textContent = para.replace(/\n/g, " ");
-          return p;
-        }),
-    );
-    consent.checked = false;
-    consent.disabled = !currentUuid;
-    archivedNote.hidden = true;
+    renderAnswer(data.answer);
     paper.hidden = false;
     paper.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
@@ -67,29 +86,7 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-consent.addEventListener("change", async () => {
-  if (!consent.checked || !currentUuid) return;
-  consent.disabled = true;
-  try {
-    const res = await fetch("/api/archive", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ uuid: currentUuid }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "기록하지 못했습니다.");
-    archivedNote.textContent = `${data.label} — 서가에 기록되었습니다.`;
-    archivedNote.hidden = false;
-  } catch (err) {
-    consent.checked = false;
-    consent.disabled = false;
-    archivedNote.textContent = err.message;
-    archivedNote.hidden = false;
-  }
-});
-
 again.addEventListener("click", () => {
-  currentUuid = null;
   questionEl.value = "";
   paper.hidden = true;
   error.hidden = true;

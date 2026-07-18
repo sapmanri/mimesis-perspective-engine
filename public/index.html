@@ -21,7 +21,7 @@
           name="question"
           rows="3"
           maxlength="500"
-          placeholder="오늘은 무엇을 들고 오셨나요?"
+          placeholder="오늘 어떤 질문을 품고 오셨나요?"
           aria-label="질문"
         ></textarea>
         <button id="knock" type="submit">문을 두드립니다.</button>
@@ -32,15 +32,10 @@
 
     <section id="paper" aria-label="답" hidden>
       <p id="paper-question" class="paper-question"></p>
+      <div id="layer-place" class="layer-place" hidden></div>
+      <div id="layer-view" class="layer-view" hidden></div>
       <div id="paper-answer" class="paper-answer"></div>
       <p class="signature">— 삽만리</p>
-      <div id="archive-consent">
-        <label>
-          <input type="checkbox" id="consent" />
-          이 질문과 답을 만리서재 기록 보관소에 남겨도 좋습니다.
-        </label>
-        <p id="archived-note" hidden></p>
-      </div>
       <button id="again" type="button">다른 질문을 들고 다시 두드립니다.</button>
     </section>
   </main>

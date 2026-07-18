@@ -8,12 +8,6 @@ export interface Env {
   PROMPT_VERSION: string;
 }
 
-export interface PendingRecord {
-  question: string;
-  answer: string;
-  created_at: string;
-}
-
 export const json = (data: unknown, status = 200): Response =>
   new Response(JSON.stringify(data), {
     status,

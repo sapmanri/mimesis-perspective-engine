@@ -12,6 +12,7 @@
 
 - v1 초안 1차~3차 (2026-07-18): 파이프라인 → Observation Layer → Feature 벡터. 과정은 git이 기억한다.
 - v1 확정 (2026-07-18): **Observation Lexicon**으로 개명(Dictionary는 단어집, Lexicon은 인지 체계). Feature를 **Static / Emergent** 두 종류로 분리 — Intent는 Feature에서 바로 나오지 않고 Emergent를 거친다. 구 발현표(부록 B) 완전 삭제. 구조 완결 — 남은 것은 설계가 아니라 번역이다.
+- v1.1 (2026-07-19): 잎 금지 원칙에 예외 1건 — 서비스 표현 층의 **"질문의 자리"** 승화 허용(사람이 아니라 질문에 대해서만). 첫 사용자 판정에서 발견된 형질적 요구를 반영. 표현 프로필 문서(`MANRI_LIBRARY_EXPRESSION_V1.md`) 체계 신설.
 
 ---
 
@@ -223,7 +224,7 @@ Question                       사용자 입력 원문
 노드의 의미:
 
 - **Observation 없이 Emergent 없고, Emergent 없이 Intent 없다.**
-- **Observation과 Emergent는 잎을 만들지 않는다** — 답의 어떤 문장도 벡터나 도출에서 직접 나오지 않는다.
+- **Observation과 Emergent는 잎을 만들지 않는다** — 답의 어떤 문장도 벡터나 도출에서 직접 나오지 않는다. 단 하나의 예외(v1.1): 서비스 표현 층이 해부 결과를 **"질문의 자리"**로 승화할 수 있다. 그때도 사람을 규정하지 않고 질문에 대해서만 말한다 — "당신의 질문은 ~의 자리에서 시작되었습니다"는 허용, "당신은 ~하시군요"는 금지 (Trait I-01 보존). 예: `MANRI_LIBRARY_EXPRESSION_V1.md`.
 - **Safety는 언제나 Compose보다 위에 있다.**
 - **self_check는 잎이 아니라 출구다** — 실패하면 Compose로 되돌아간다.
 

@@ -91,6 +91,26 @@ button:disabled { color: var(--ink-soft); cursor: default; }
   margin-bottom: 2.5rem;
 }
 
+/* 1층 — 질문의 자리: 산문보다 낮은 목소리 */
+.layer-place {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  margin-bottom: 2.25rem;
+}
+.layer-place p { margin-bottom: 1.2em; }
+.layer-place p:last-child { margin-bottom: 0; }
+
+/* 2층 — 관점: 산문으로 넘어가는 문턱 */
+.layer-view {
+  font-size: 1rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 2.25rem;
+  border-bottom: 1px solid var(--line);
+}
+.layer-view p { margin-bottom: 1.2em; }
+.layer-view p:last-child { margin-bottom: 0; }
+
+/* 3층 — 삽만리의 산문 */
 .paper-answer { font-size: 1rem; }
 .paper-answer p { margin-bottom: 1.6em; }
 .paper-answer p:last-child { margin-bottom: 0; }
@@ -101,18 +121,7 @@ button:disabled { color: var(--ink-soft); cursor: default; }
   margin-top: 3rem;
 }
 
-#archive-consent {
-  margin-top: 3.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--line);
-  font-size: 0.85rem;
-  color: var(--ink-soft);
-}
-#archive-consent label { display: flex; gap: 0.6rem; align-items: baseline; cursor: pointer; }
-#archive-consent input { accent-color: var(--ink-soft); }
-#archived-note { margin-top: 0.9rem; }
-
-#again { margin: 3rem auto 0; display: block; font-size: 0.9rem; }
+#again { margin: 3.5rem auto 0; display: block; font-size: 0.9rem; }
 
 @media (min-width: 48rem) {
   #hall { padding-top: 7rem; }

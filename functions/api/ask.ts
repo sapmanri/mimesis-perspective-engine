@@ -1,12 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT } from "../_lib/prompt";
-import { json, rateLimitKey, type Env, type PendingRecord } from "../_lib/common";
+import { fillMetadata } from "../_lib/analyzer";
+import { json, rateLimitKey, type Env } from "../_lib/common";
 
 const MAX_QUESTION_CHARS = 500;
 const RATE_LIMIT_PER_MINUTE = 6;
-const PENDING_TTL_SECONDS = 3600;
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async (ctx) => {
+  const { request, env } = ctx;
   if (!env.ANTHROPIC_API_KEY) {
     return json({ error: "서재가 아직 준비되지 않았습니다." }, 503);
   }
@@ -56,7 +57,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   if (response.stop_reason === "refusal") {
     return json({
-      uuid: null,
       answer: "이 질문에는 답을 건네드리기 어렵습니다. 다른 질문을 들고 오시면, 다시 바라보겠습니다.",
     });
   }
@@ -70,16 +70,31 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: "답을 준비하지 못했습니다. 다시 한번 두드려 주세요." }, 502);
   }
 
-  // 동의 전에는 영구 저장하지 않는다 — KV 임시 보관(1시간) 후 자동 소멸.
+  // 기록은 선택이 아니라 서재의 호흡이다 — 백그라운드로 남기고, 실패해도 답변은 건넨다.
+  // 사용자에게 저장 여부를 묻지도, 보여주지도 않는다. (표현 명세 4절)
   const uuid = crypto.randomUUID();
-  const pending: PendingRecord = {
-    question,
-    answer,
-    created_at: new Date().toISOString(),
-  };
-  await env.PENDING.put(`pend:${uuid}`, JSON.stringify(pending), {
-    expirationTtl: PENDING_TTL_SECONDS,
-  });
+  try {
+    await env.DB.prepare(
+      `INSERT INTO records
+         (uuid, question, answer, created_at, genome_edition, engine_version, prompt_version, q_len, a_len)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        uuid,
+        question,
+        answer,
+        new Date().toISOString(),
+        env.GENOME_EDITION,
+        env.ENGINE_VERSION,
+        env.PROMPT_VERSION,
+        question.length,
+        answer.length,
+      )
+      .run();
+    ctx.waitUntil(fillMetadata(env, uuid, question, answer));
+  } catch {
+    // 호흡이 끊겨도 대화는 계속된다.
+  }
 
-  return json({ uuid, answer });
+  return json({ answer });
 };
