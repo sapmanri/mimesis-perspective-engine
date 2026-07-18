@@ -3,8 +3,7 @@
 - 문서 경로: `docs/SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md`
 - 문서 성격: Genome Trait를 실행 규칙(Rule)으로 옮기는 명세 (문서 로드맵 02)
 - 계층: Layer 2 — Perception Engine
-- 버전: V1 초안
-- 상태: 검토 대기
+- 버전: **v1 확정** (2026-07-18, 아키텍트 마침표)
 - 형질 원본: `SAPMANRI_GENOME_SPEC_V1.md` — **Genome Edition 1 (확정, 불변)**
 - 상위 문서: `SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 

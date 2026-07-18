@@ -1,8 +1,22 @@
+Every question has its own morphology.
+
+Every observer has its own genome.
+
+Understanding begins where the two meet.
+
+<br>
+
+모든 질문에는 저마다의 형태가 있다.
+모든 관찰자에게는 저마다의 게놈이 있다.
+이해는 그 둘이 만나는 곳에서 시작된다.
+
+---
+
 # MIMESIS — 삽만리식으로 세상을 보는 법
 
 - 문서 경로: `docs/SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 - 문서 성격: 구현 전 설계 정본
-- 버전: V1.9
+- 버전: V1.10
 - 상태: 정본 확정 (2026-07-18)
 - 저장 위치: `sapmanri/mimesis-perspective-engine` `docs/` — 정본 위치.
 
@@ -18,6 +32,7 @@
 - V1.7 (2026-07-18): **프롬프트는 창작물이 아니라 파생물** 원칙 명문화. 로드맵에 03 `SAPMANRI_PROMPT_BLUEPRINT_V1.md`(사람이 읽는 설계) 삽입, 04는 `CLAUDE_SYSTEM_PROMPT_V1.md`(첫 번째 구현체)로 개명 — 총 7단계. Genome 프로젝트 종료 선언(헌법 제정): 이후 모든 문서는 헌법을 만드는 문서가 아니라 구현하는 문서.
 - V1.8 (2026-07-18): Blueprint에 **Observation Layer** 삽입 반영(아키텍트 판정) — 질문은 분류되기 전에 해부된다. 파이프라인 6단계, Observation Table(type + confidence)이 1차 라우팅, 형질 발현표는 확정 보류.
 - V1.9 (2026-07-18): **Observation은 분류가 아니라 발견** — Table 폐기, Observation Feature Dictionary(질문의 형질 사전, Version 체계)로 교체. Engine 최종 정의 확정: **질문의 형질(Feature)과 나의 형질(Trait)을 연결하는 번역기.**
+- V1.10 (2026-07-18): **구조 완결 (아키텍트 마침표).** Dictionary → **Observation Lexicon** 개명, Feature를 Static/Emergent로 이원화(Intent는 Feature→Emergent→Intent). 프로젝트 첫 문장 제정(문서 머리). Genome·Engine·Blueprint·Lexicon 전부 확정 — 남은 것은 설계가 아니라 번역(04)이다.
 
 ---
 
@@ -1256,8 +1271,8 @@ UI까지 과도하게 감성적으로 만들지 않는다.
 02. SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md
     Trait를 Rule로 실행하는 명세 — Anti Pattern·Mutation은 여기 있다.
         ↓
-03. SAPMANRI_PROMPT_BLUEPRINT_V1.md
-    사람이 읽는 설계 — Observation Feature Dictionary와 Prompt AST. 모델 독립.
+03. SAPMANRI_PROMPT_BLUEPRINT_V1.md — v1 확정 ✅
+    사람이 읽는 설계 — Observation Lexicon(Static/Emergent)과 Prompt AST. 모델 독립.
         ↓
 04. CLAUDE_SYSTEM_PROMPT_V1.md
     기계가 읽는 번역 — Blueprint의 첫 번째 구현체. GPT는 두 번째.
