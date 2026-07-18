@@ -16,7 +16,7 @@ Understanding begins where the two meet.
 
 - 문서 경로: `docs/SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 - 문서 성격: 구현 전 설계 정본
-- 버전: V1.11
+- 버전: V1.12
 - 상태: 정본 확정 (2026-07-18)
 - 저장 위치: `sapmanri/mimesis-perspective-engine` `docs/` — 정본 위치.
 
@@ -34,6 +34,7 @@ Understanding begins where the two meet.
 - V1.9 (2026-07-18): **Observation은 분류가 아니라 발견** — Table 폐기, Observation Feature Dictionary(질문의 형질 사전, Version 체계)로 교체. Engine 최종 정의 확정: **질문의 형질(Feature)과 나의 형질(Trait)을 연결하는 번역기.**
 - V1.10 (2026-07-18): **구조 완결 (아키텍트 마침표).** Dictionary → **Observation Lexicon** 개명, Feature를 Static/Emergent로 이원화(Intent는 Feature→Emergent→Intent). 프로젝트 첫 문장 제정(문서 머리). Genome·Engine·Blueprint·Lexicon 전부 확정 — 남은 것은 설계가 아니라 번역(04)이다.
 - V1.11 (2026-07-19): 전체 명명 **Observation Architecture** (Genome은 부품, Architecture가 시스템). 첫 공개 문서 `MIMESIS_OBSERVATION_ARCHITECTURE.md` 작성 — Abstract·30초 설명·문제 정의·접근·계층·핵심 원리 3문. 04 번역은 이 문서 확정 후 진행.
+- V1.12 (2026-07-19): **설계 단계 종료 선언 (아키텍트 최종 판정).** 프로젝트명 **MIMESIS — Designing Observers**. Architecture·Genome·Engine·Blueprint 4문서 = 헌법, 이후 모든 문서는 그 구현체. 공개 문서 확정(30초 설명 첫 문장 "대부분의 AI는 답변을 설계한다. 우리는 관찰자를 설계한다", 방어 문장을 "Prompts can be reproduced. Discovery cannot."으로 교체), README 표지 교체. 04 번역 착수 허가.
 
 ---
 
