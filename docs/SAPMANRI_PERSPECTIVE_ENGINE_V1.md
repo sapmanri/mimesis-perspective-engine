@@ -16,7 +16,7 @@ Understanding begins where the two meet.
 
 - 문서 경로: `docs/SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 - 문서 성격: 구현 전 설계 정본
-- 버전: V1.10
+- 버전: V1.11
 - 상태: 정본 확정 (2026-07-18)
 - 저장 위치: `sapmanri/mimesis-perspective-engine` `docs/` — 정본 위치.
 
@@ -33,6 +33,7 @@ Understanding begins where the two meet.
 - V1.8 (2026-07-18): Blueprint에 **Observation Layer** 삽입 반영(아키텍트 판정) — 질문은 분류되기 전에 해부된다. 파이프라인 6단계, Observation Table(type + confidence)이 1차 라우팅, 형질 발현표는 확정 보류.
 - V1.9 (2026-07-18): **Observation은 분류가 아니라 발견** — Table 폐기, Observation Feature Dictionary(질문의 형질 사전, Version 체계)로 교체. Engine 최종 정의 확정: **질문의 형질(Feature)과 나의 형질(Trait)을 연결하는 번역기.**
 - V1.10 (2026-07-18): **구조 완결 (아키텍트 마침표).** Dictionary → **Observation Lexicon** 개명, Feature를 Static/Emergent로 이원화(Intent는 Feature→Emergent→Intent). 프로젝트 첫 문장 제정(문서 머리). Genome·Engine·Blueprint·Lexicon 전부 확정 — 남은 것은 설계가 아니라 번역(04)이다.
+- V1.11 (2026-07-19): 전체 명명 **Observation Architecture** (Genome은 부품, Architecture가 시스템). 첫 공개 문서 `MIMESIS_OBSERVATION_ARCHITECTURE.md` 작성 — Abstract·30초 설명·문제 정의·접근·계층·핵심 원리 3문. 04 번역은 이 문서 확정 후 진행.
 
 ---
 
@@ -140,6 +141,20 @@ Genome Spec(`SAPMANRI_GENOME_SPEC_V1.md`)은 형질만, Engine Spec(`SAPMANRI_PE
 > Edition 2 is not planned. It is discovered.
 
 내부 호칭: 일상 대화에서는 **Genome / Engine / Prompt** 세 단어로 부른다. Genome이 하나이므로 Engine도 하나다 — Perception을 매번 붙이지 않는다. 문서명은 유지한다.
+
+전체를 부르는 이름은 **Observation Architecture**다. Genome은 부품이고, Architecture가 시스템이다.
+
+```
+Observation Architecture
+│
+├── Genome          관찰자의 형질 (불변, Edition)
+├── Engine          형질의 실행 (가변, Version)
+├── Blueprint       사람이 읽는 설계
+├── Prompt          기계가 읽는 번역
+└── Implementations Claude → GPT → Gemini → …
+```
+
+공개 문서: `MIMESIS_OBSERVATION_ARCHITECTURE.md` — 이 아키텍처를 3분 안에 설명하는 첫 번째 공개 문서. 새 팀원·투자자·연구자는 이 문서부터 읽는다.
 
 프롬프트의 지위: **Prompt는 창작물이 아니라 파생물이다.** 사람이 읽는 설계(Prompt Blueprint)에서 기계가 읽는 각 모델 프롬프트가 번역·생성된다. 전체 흐름은 Genome(철학) → Engine(실행) → Blueprint(설계) → Prompt(번역) → LLM이다. Claude 프롬프트는 Blueprint의 첫 번째 구현체이고, GPT는 두 번째, Gemini는 세 번째가 된다.
 
