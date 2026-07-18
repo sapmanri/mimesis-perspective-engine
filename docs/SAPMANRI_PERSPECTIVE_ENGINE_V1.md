@@ -2,7 +2,7 @@
 
 - 문서 경로: `docs/SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 - 문서 성격: 구현 전 설계 정본
-- 버전: V1.2
+- 버전: V1.3
 - 상태: 정본 확정 (2026-07-18)
 - 저장 위치: `sapmanri/mimesis-perspective-engine` `docs/` — 정본 위치.
 
@@ -11,6 +11,7 @@
 - V1 (2026-07-18): 초안 작성, 검토 대기
 - V1.1 (2026-07-18): 검토 반영 2건 — 7.8 무상태 MVP에서의 다양성 규칙, 8.3 호출 구조와 2패스 전환 기준 추가. 정본 확정. `mimesis-sight-path/docs/`에 임시 보존 후 별도 저장소 `mimesis-perspective-engine`으로 이전.
 - V1.2 (2026-07-18): Phase 1 아키텍트 지시 반영 — 1.4 엔진의 정체(Perception Engine, 4단계 구조), 7.6 장면·은유 정의, 13.0 평가 운영 규칙, 14.1 비공개 보충 테스트 세트 추가. Conversation Memory의 V2 이동 명시.
+- V1.3 (2026-07-18): 정식 명칭을 **Perception Engine**으로 확정, 문서 전체 통일. 1.4에 Genome↔Engine 관계 스택과 모델 독립 원칙 추가. 18절 문서 로드맵(01 Genome Spec → 02 System Prompt → 03 Evaluation → 04 API → 05 MVP) 신설.
 
 ---
 
@@ -48,9 +49,18 @@
 
 ### 1.4 엔진의 정체 — Perception Engine
 
-이 엔진의 작업명은 Perspective Engine이지만, 정체는 **Perception Engine(지각 엔진)**에 가깝다.
+이 엔진의 정식 명칭은 **Perception Engine(지각 엔진)**이다.
 
-삽만리의 핵심은 답하는 방식이 아니라, 그보다 먼저 **세상을 인식하는 방식**이기 때문이다.
+Perspective(관점)가 아니라 Perception(인지)을 선택한 이유: 관점은 이미 본 것을 어떤 각도에서 말하느냐의 문제다. 그러나 이 문서가 계속 정의해 온 것은 그보다 한 단계 앞이다.
+
+- 무엇을 먼저 보는가
+- 어디서 멈추는가
+- 무엇을 선택하는가
+- 감정을 언제 꺼내는가
+
+이것은 관점이 아니라 인지의 규칙이다. 엔진 이름은 그것을 따른다.
+
+(저장소명 `mimesis-perspective-engine`과 이 파일명은 초기 작업명을 유지한다 — URL 안정성이 이유이며, 명칭 충돌로 보지 않는다.)
 
 엔진의 논리 구조는 네 단계다.
 
@@ -61,6 +71,26 @@
 - **인식**: Perception Layer — 무엇을 먼저 보는가
 - **해석**: Distance / Emotion / Meaning Layer — 본 것과의 거리, 감정 처리, 의미 생성
 - **표현**: Language / Utility / Openness Layer — 어떻게 말하고, 어디까지 돕고, 어디서 멈추는가
+
+Genome이 가장 많이 존재하는 곳은 인식(Perception) 단계다.
+
+#### Observation Genome과 Perception Engine의 관계
+
+```
+Observation Genome   ← 엔진이 세상을 바라보는 규칙 (철학과 규칙의 명세)
+        ↓
+Perception Engine    ← 그 Genome을 실행하는 기계
+        ↓
+System Prompt        ← 특정 모델용 구현물 (Genome에서 생성됨)
+        ↓
+LLM (Claude, …)      ← 실행 주체
+        ↓
+Answer
+```
+
+Genome은 데이터가 아니다. 엔진도 아니다. 답을 저장하지도 않는다. Genome은 **엔진이 세상을 바라보는 규칙**이고, Engine은 그 규칙을 실행하는 기계다. 이 분리가 이후 모든 설명의 기준이 된다.
+
+이 분리에서 나오는 원칙이 **모델 독립성(Model-agnostic)**이다. Genome은 AI 프롬프트가 아니라 철학과 규칙의 명세로 작성한다. 그 명세 위에서 Claude용, GPT용, Gemini용, 로컬 LLM용 System Prompt를 각각 생성한다. 모델이 바뀌어도 Genome은 건드리지 않고 프롬프트만 새로 생성한다.
 
 이 구조를 유지해야 하는 이유는 확장성이다. 답변 문체만 정의하면 질문형 데모에서 끝나지만, 인식→해석→표현의 단계를 정의하면 Writing Studio, 별이 답글, 2D Walk, 만리서재, Story NPC가 각자 다른 **표현** 형태를 갖더라도 같은 **인식과 해석**을 공유하는 기반 엔진(Core Engine)이 된다. 이 프로젝트는 그 공통 엔진의 첫 번째 기준점이다.
 
@@ -173,7 +203,7 @@ Observation Genome 자체를 검증하는 독립 데모다.
 
 > 필요한 경우 현실적인 정보와 안전한 조언은 분명히 제공하되, 문체만 감성적으로 포장해 정확성을 흐리지 않는다.
 
-이 문장은 Perspective Engine의 사실성 계약으로 그대로 사용할 수 있다.
+이 문장은 Perception Engine의 사실성 계약으로 그대로 사용할 수 있다.
 
 ---
 
@@ -858,7 +888,7 @@ UI까지 과도하게 감성적으로 만들지 않는다.
 - 당신의 마음을 들려주세요.
 - 오늘의 마음을 천천히 내려놓아 보세요.
 
-이 프로젝트는 감정 상담 서비스가 아니라 질문형 Perspective Engine이다.
+이 프로젝트는 감정 상담 서비스가 아니라 질문형 Perception Engine이다.
 
 ---
 
@@ -952,7 +982,7 @@ UI까지 과도하게 감성적으로 만들지 않는다.
 
 ### 12.3 개발 순서
 
-1. 시스템 프롬프트 V1 작성
+1. Genome Spec V1 작성(18절의 문서 01) 후 그로부터 시스템 프롬프트 V1 작성
 2. 테스트 질문 20개를 모델에 직접 투입
 3. 실패 패턴 기록
 4. 프롬프트 V2 조정 (사실성 저하가 게놈 적용 때문이면 8.3의 2패스 전환 기준 검토)
@@ -1174,3 +1204,35 @@ UI까지 과도하게 감성적으로 만들지 않는다.
 > 그러나 질문의 본래 목적은 흐리지 않는다.
 
 이 원칙이 지켜질 때, 이 엔진은 단순한 감성 챗봇이 아니라 삽만리 Observation Genome의 독립된 생성 엔진이 될 수 있다.
+
+---
+
+## 18. 문서 체계와 로드맵
+
+이 문서(본 정본)는 전체 설계의 출발점이며, 이후 문서는 다음 순서로 작성한다.
+
+```
+01. SAPMANRI_GENOME_SPEC_V1.md
+    세계를 바라보는 규칙의 명세 — 모델 독립적. 프롬프트가 아니다.
+        ↓
+02. SAPMANRI_SYSTEM_PROMPT_V1.md
+    Claude용 구현 명세 — Genome Spec에서 생성
+        ↓
+03. SAPMANRI_EVALUATION_SPEC_V1.md
+    20문항 + 비공개 보충 세트 + 채점 기준 + 회귀 테스트
+        ↓
+04. SAPMANRI_API_SPEC_V1.md
+    호출 방식 — 11절(비용·남용 방지)을 구체화
+        ↓
+05. MVP 구현
+```
+
+순서의 이유: 지금까지는 "Genome → Prompt"로 생각했지만, 실제 구조는 다음이어야 한다.
+
+```
+Genome Spec → Prompt Generator → System Prompt → LLM
+```
+
+앞으로 이 엔진은 Claude만 쓰지 않을 가능성이 크다. GPT도, Gemini도, 로컬 LLM도 같은 Genome을 사용할 수 있어야 한다. 따라서 Genome Spec은 특정 모델의 프롬프트 문법에 의존하지 않는 철학과 규칙의 명세로 먼저 확정하고, 각 모델용 System Prompt는 그 명세에서 생성한다. 모델이 바뀌면 02만 다시 만들고 01은 건드리지 않는다.
+
+이것이 MIMESIS를 하나의 제품이 아니라 플랫폼으로 가져가는 구조다.
