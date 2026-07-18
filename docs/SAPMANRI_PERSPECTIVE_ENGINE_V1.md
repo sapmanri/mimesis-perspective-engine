@@ -2,7 +2,7 @@
 
 - 문서 경로: `docs/SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 - 문서 성격: 구현 전 설계 정본
-- 버전: V1.4
+- 버전: V1.5
 - 상태: 정본 확정 (2026-07-18)
 - 저장 위치: `sapmanri/mimesis-perspective-engine` `docs/` — 정본 위치.
 
@@ -12,7 +12,8 @@
 - V1.1 (2026-07-18): 검토 반영 2건 — 7.8 무상태 MVP에서의 다양성 규칙, 8.3 호출 구조와 2패스 전환 기준 추가. 정본 확정. `mimesis-sight-path/docs/`에 임시 보존 후 별도 저장소 `mimesis-perspective-engine`으로 이전.
 - V1.2 (2026-07-18): Phase 1 아키텍트 지시 반영 — 1.4 엔진의 정체(Perception Engine, 4단계 구조), 7.6 장면·은유 정의, 13.0 평가 운영 규칙, 14.1 비공개 보충 테스트 세트 추가. Conversation Memory의 V2 이동 명시.
 - V1.3 (2026-07-18): 정식 명칭을 **Perception Engine**으로 확정, 문서 전체 통일. 1.4에 Genome↔Engine 관계 스택과 모델 독립 원칙 추가. 18절 문서 로드맵(01 Genome Spec → 02 System Prompt → 03 Evaluation → 04 API → 05 MVP) 신설.
-- V1.4 (2026-07-18): 1.4의 스택을 **최종 계층 모델 Layer 0~5**로 확정 (Layer 2 Safety & Truth Contract, Layer 3 System Prompt Generator 명시). 사실성·안전·모델 정책의 Genome 배제 규율 명문화. `SAPMANRI_GENOME_SPEC_V1.md` 초안 작성 시작.
+- V1.4 (2026-07-18): 1.4의 스택을 계층 모델 Layer 0~5로 확정 (Safety & Truth Contract, System Prompt Generator 명시). 사실성·안전·모델 정책의 Genome 배제 규율 명문화. `SAPMANRI_GENOME_SPEC_V1.md` 초안 작성 시작.
+- V1.5 (2026-07-18): 계층 모델 재확정 — **Layer 0 Observation / 1 Genome Traits(불변) / 2 Perception Engine / 3 Safety & Truth / 4 Prompt Generator / 5 LLM**. Genome은 규칙이 아니라 **형질(Trait)의 집합**이며 불변. Rule·Anti Pattern·Mutation은 Layer 2로 이관 (`SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md` 신설). 18절 로드맵 6단계로 갱신.
 
 ---
 
@@ -78,22 +79,35 @@ Genome이 가장 많이 존재하는 곳은 인식(Perception) 단계다.
 #### Observation Genome과 Perception Engine의 관계 — 최종 계층 모델
 
 ```
-Layer 0  Observation Genome        세상을 어떻게 인식하는가 (규칙의 명세)
+Layer 0  Observation               관찰 대상 (세계)
             ↓
-Layer 1  Perception Engine         Genome을 실행하는 과정
+Layer 1  Genome Traits             삽만리라는 생물의 형질 — 불변
             ↓
-Layer 2  Safety & Truth Contract   사실성과 안전 보장 (9절이 여기 속한다)
+Layer 2  Perception Engine         Trait를 Rule로 실행 — 가변
             ↓
-Layer 3  System Prompt Generator   모델별 프롬프트 생성
+Layer 3  Safety & Truth Contract   사실성과 안전 보장 (9절이 여기 속한다)
             ↓
-Layer 4  LLM (Claude / GPT / Gemini / 로컬)
+Layer 4  System Prompt Generator   모델별 프롬프트 생성
             ↓
-Layer 5  Answer
+Layer 5  LLM (Claude / GPT / Gemini / 로컬)
+            ↓
+         Answer
 ```
 
-Genome은 데이터가 아니다. 엔진도 아니다. 답을 저장하지도 않는다. Genome은 **엔진이 세상을 바라보는 규칙**이고, Engine은 그 규칙을 실행하는 기계다. 이 분리가 이후 모든 설명의 기준이 된다.
+Genome은 데이터가 아니다. 엔진도 아니다. 규칙의 목록조차 아니다. Genome은 **관찰을 어떻게 유전시키는가** — 즉 형질(Trait)의 집합이다. Engine은 그 형질을 실행 규칙(Rule)으로 옮기는 기계다.
 
-계층 분리의 핵심 규율: **사실성, 안전, 의료·법률, 자살 대응, 최신 정보, 모델 정책, API는 Genome(Layer 0)에 넣지 않는다.** 전부 Layer 2 이하의 책임이다. 이 둘을 섞으면 Genome이 비대해져 결국 프롬프트 모음집이 된다. Genome Spec(`SAPMANRI_GENOME_SPEC_V1.md`)은 이 경계를 따른다.
+```
+Trait (형질, 불변) → Rule (실행 규칙, 가변) → Answer
+```
+
+이 분리가 이후 모든 설명의 기준이 된다. 형질은 바뀌지 않는다. 모델이 바뀌면 Rule과 프롬프트만 바뀐다. 10년 뒤 어떤 모델이 오더라도 Genome은 그대로다.
+
+계층 분리의 핵심 규율:
+
+- **사실성, 안전, 의료·법률, 자살 대응, 최신 정보, 모델 정책, API는 Genome에 넣지 않는다** — Layer 3 이하의 책임.
+- **실행 규칙, Anti Pattern, Mutation(예외)도 Genome에 넣지 않는다** — Layer 2의 책임. Genome은 불변이므로 예외를 갖지 않는다. 예외는 실행의 문제다.
+
+Genome Spec(`SAPMANRI_GENOME_SPEC_V1.md`)은 형질만, Engine Spec(`SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md`)은 규칙을 담는다.
 
 이 분리에서 나오는 원칙이 **모델 독립성(Model-agnostic)**이다. Genome은 AI 프롬프트가 아니라 철학과 규칙의 명세로 작성한다. 그 명세 위에서 Claude용, GPT용, Gemini용, 로컬 LLM용 System Prompt를 각각 생성한다. 모델이 바뀌어도 Genome은 건드리지 않고 프롬프트만 새로 생성한다.
 
@@ -1218,18 +1232,21 @@ UI까지 과도하게 감성적으로 만들지 않는다.
 
 ```
 01. SAPMANRI_GENOME_SPEC_V1.md
-    세계를 바라보는 규칙의 명세 — 모델 독립적. 프롬프트가 아니다.
+    삽만리라는 생물의 형질(Trait) 명세 — 불변. 규칙도 프롬프트도 아니다.
         ↓
-02. SAPMANRI_SYSTEM_PROMPT_V1.md
-    Claude용 구현 명세 — Genome Spec에서 생성
+02. SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md
+    Trait를 Rule로 실행하는 명세 — Anti Pattern·Mutation은 여기 있다.
         ↓
-03. SAPMANRI_EVALUATION_SPEC_V1.md
+03. SAPMANRI_SYSTEM_PROMPT_V1.md
+    Claude용 구현 명세 — Trait와 Rule에서 생성
+        ↓
+04. SAPMANRI_EVALUATION_SPEC_V1.md
     20문항 + 비공개 보충 세트 + 채점 기준 + 회귀 테스트
         ↓
-04. SAPMANRI_API_SPEC_V1.md
+05. SAPMANRI_API_SPEC_V1.md
     호출 방식 — 11절(비용·남용 방지)을 구체화
         ↓
-05. MVP 구현
+06. MVP 구현
 ```
 
 순서의 이유: 지금까지는 "Genome → Prompt"로 생각했지만, 실제 구조는 다음이어야 한다.
@@ -1238,6 +1255,6 @@ UI까지 과도하게 감성적으로 만들지 않는다.
 Genome Spec → Prompt Generator → System Prompt → LLM
 ```
 
-앞으로 이 엔진은 Claude만 쓰지 않을 가능성이 크다. GPT도, Gemini도, 로컬 LLM도 같은 Genome을 사용할 수 있어야 한다. 따라서 Genome Spec은 특정 모델의 프롬프트 문법에 의존하지 않는 철학과 규칙의 명세로 먼저 확정하고, 각 모델용 System Prompt는 그 명세에서 생성한다. 모델이 바뀌면 02만 다시 만들고 01은 건드리지 않는다.
+앞으로 이 엔진은 Claude만 쓰지 않을 가능성이 크다. GPT도, Gemini도, 로컬 LLM도 같은 Genome을 사용할 수 있어야 한다. 따라서 Genome Spec은 특정 모델의 프롬프트 문법에 의존하지 않는 형질의 명세로 먼저 확정하고, 각 모델용 System Prompt는 Trait와 Rule에서 생성한다. 모델이 바뀌면 03(필요하면 02의 Rule)만 다시 만들고 01은 건드리지 않는다.
 
 이것이 MIMESIS를 하나의 제품이 아니라 플랫폼으로 가져가는 구조다.
