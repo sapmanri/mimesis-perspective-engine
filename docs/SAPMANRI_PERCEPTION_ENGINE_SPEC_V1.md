@@ -18,6 +18,8 @@
 
 Genome(Layer 1)은 형질의 명세이고 불변이다. 이 문서(Layer 2)는 그 형질을 **실행 가능한 규칙**으로 옮긴다.
 
+Engine의 최종 정의: **질문의 형질(Observation Feature)과 삽만리의 형질(Trait)을 연결하는 번역기.** 질문 쪽 형질의 사전은 Blueprint(로드맵 03) 2절에 있다.
+
 ```
 Trait   (형질 — Genome Spec, 불변)
   ↓

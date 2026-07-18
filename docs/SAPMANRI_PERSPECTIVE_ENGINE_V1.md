@@ -2,7 +2,7 @@
 
 - 문서 경로: `docs/SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 - 문서 성격: 구현 전 설계 정본
-- 버전: V1.8
+- 버전: V1.9
 - 상태: 정본 확정 (2026-07-18)
 - 저장 위치: `sapmanri/mimesis-perspective-engine` `docs/` — 정본 위치.
 
@@ -17,6 +17,7 @@
 - V1.6 (2026-07-18): **Genome Edition 1 확정** (게놈 설계자 판정). Edition/Version 표기 규약(Genome만 Edition, 발견으로만 증가), 내부 호칭 Genome/Engine/Prompt 기록.
 - V1.7 (2026-07-18): **프롬프트는 창작물이 아니라 파생물** 원칙 명문화. 로드맵에 03 `SAPMANRI_PROMPT_BLUEPRINT_V1.md`(사람이 읽는 설계) 삽입, 04는 `CLAUDE_SYSTEM_PROMPT_V1.md`(첫 번째 구현체)로 개명 — 총 7단계. Genome 프로젝트 종료 선언(헌법 제정): 이후 모든 문서는 헌법을 만드는 문서가 아니라 구현하는 문서.
 - V1.8 (2026-07-18): Blueprint에 **Observation Layer** 삽입 반영(아키텍트 판정) — 질문은 분류되기 전에 해부된다. 파이프라인 6단계, Observation Table(type + confidence)이 1차 라우팅, 형질 발현표는 확정 보류.
+- V1.9 (2026-07-18): **Observation은 분류가 아니라 발견** — Table 폐기, Observation Feature Dictionary(질문의 형질 사전, Version 체계)로 교체. Engine 최종 정의 확정: **질문의 형질(Feature)과 나의 형질(Trait)을 연결하는 번역기.**
 
 ---
 
@@ -104,6 +105,12 @@ Trait (형질, 불변) → Rule (실행 규칙, 가변) → Answer
 ```
 
 이 분리가 이후 모든 설명의 기준이 된다. 형질은 바뀌지 않는다. 모델이 바뀌면 Rule과 프롬프트만 바뀐다. 10년 뒤 어떤 모델이 오더라도 Genome은 그대로다.
+
+그리고 반대편에 질문이 있다. 질문도 형질을 갖는다 — **Trait는 삽만리의 형질이고, Observation Feature는 질문의 형질이다.** 따라서 Engine의 최종 정의는 이것이다.
+
+> Engine은 질문의 형질(Feature)과 나의 형질(Trait)을 연결하는 번역기다.
+
+Feature의 사전(Observation Feature Dictionary, Blueprint 2절)은 Edition이 아니라 **Version**을 갖는다 — Feature는 계속 발견되고, 새 Feature가 발견되어도 Genome은 바뀌지 않는다.
 
 계층 분리의 핵심 규율:
 
@@ -1250,7 +1257,7 @@ UI까지 과도하게 감성적으로 만들지 않는다.
     Trait를 Rule로 실행하는 명세 — Anti Pattern·Mutation은 여기 있다.
         ↓
 03. SAPMANRI_PROMPT_BLUEPRINT_V1.md
-    사람이 읽는 설계 — Observation 파이프라인 6단계와 Prompt AST. 모델 독립.
+    사람이 읽는 설계 — Observation Feature Dictionary와 Prompt AST. 모델 독립.
         ↓
 04. CLAUDE_SYSTEM_PROMPT_V1.md
     기계가 읽는 번역 — Blueprint의 첫 번째 구현체. GPT는 두 번째.
