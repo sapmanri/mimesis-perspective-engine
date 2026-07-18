@@ -4,7 +4,7 @@
 - 문서 성격: 만리서재 서비스의 표현(Expression) 프로필 — Architecture "하나의 Genome, 여러 발현"의 첫 발현 명세
 - 계층: 서비스 표현 층 (Blueprint의 Compose를 만리서재에 맞게 구체화)
 - 버전: v1
-- 상태: 적용 (2026-07-19, 첫 사용자 판정 반영)
+- 상태: **V2로 대체됨** (`MANRI_LIBRARY_EXPRESSION_V2.md`) — 자리 규약·기록 규약·입구 철학은 V2가 승계
 
 ---
 
