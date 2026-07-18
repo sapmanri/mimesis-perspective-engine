@@ -1,0 +1,120 @@
+/* 만리서재 — 색보다 여백, 타이포그래피, 읽기 편한 리듬. 모바일 우선. */
+:root {
+  --paper: #faf8f4;
+  --ink: #2b2925;
+  --ink-soft: #6f6a61;
+  --line: #e3ded4;
+  --serif: "Noto Serif KR", "Source Han Serif K", "Apple SD Gothic Neo", serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { background: var(--paper); }
+
+body {
+  font-family: var(--serif);
+  color: var(--ink);
+  line-height: 1.9;
+  -webkit-font-smoothing: antialiased;
+  word-break: keep-all;
+}
+
+#hall {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 4.5rem 1.5rem 6rem;
+}
+
+h1 {
+  font-size: 1.6rem;
+  font-weight: 500;
+  letter-spacing: 0.35em;
+  text-indent: 0.35em;
+  text-align: center;
+  margin-bottom: 2.75rem;
+}
+
+.intro {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  margin-bottom: 3.25rem;
+}
+
+#ask-form { display: flex; flex-direction: column; gap: 1.25rem; }
+
+textarea {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 0.25rem 0.75rem;
+  resize: none;
+  outline: none;
+  line-height: 1.9;
+}
+textarea:focus { border-bottom-color: var(--ink-soft); }
+textarea::placeholder { color: #a9a294; }
+
+button {
+  font: inherit;
+  align-self: center;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 0.6rem 1.8rem;
+  cursor: pointer;
+  transition: border-color 0.4s ease;
+}
+button:hover, button:focus-visible { border-color: var(--ink-soft); outline: none; }
+button:disabled { color: var(--ink-soft); cursor: default; }
+
+#loading, #error {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  margin-top: 2.25rem;
+}
+
+/* 답 — 한 장의 종이 */
+#paper {
+  margin-top: 4rem;
+  padding: 3rem 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.paper-question {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  margin-bottom: 2.5rem;
+}
+
+.paper-answer { font-size: 1rem; }
+.paper-answer p { margin-bottom: 1.6em; }
+.paper-answer p:last-child { margin-bottom: 0; }
+
+.signature {
+  text-align: right;
+  color: var(--ink-soft);
+  margin-top: 3rem;
+}
+
+#archive-consent {
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+#archive-consent label { display: flex; gap: 0.6rem; align-items: baseline; cursor: pointer; }
+#archive-consent input { accent-color: var(--ink-soft); }
+#archived-note { margin-top: 0.9rem; }
+
+#again { margin: 3rem auto 0; display: block; font-size: 0.9rem; }
+
+@media (min-width: 48rem) {
+  #hall { padding-top: 7rem; }
+  h1 { font-size: 1.8rem; }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "manri-library",
+  "private": true,
+  "scripts": {
+    "verify": "node scripts/verify-prompt.mjs",
+    "dev": "wrangler pages dev",
+    "deploy": "npm run verify && wrangler pages deploy public"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.112.3"
+  },
+  "devDependencies": {
+    "wrangler": "^4.112.0"
+  }
+}

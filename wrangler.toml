@@ -1,0 +1,17 @@
+name = "manri-library"
+compatibility_date = "2026-07-01"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "manri-library-archive"
+database_id = "f65d7f11-b0cf-41be-9d01-60f8e59a2462"
+
+[[kv_namespaces]]
+binding = "PENDING"
+id = "0a547750273a4779a15279cac8785a6b"
+
+[vars]
+GENOME_EDITION = "1"
+ENGINE_VERSION = "v1"
+PROMPT_VERSION = "v1"
