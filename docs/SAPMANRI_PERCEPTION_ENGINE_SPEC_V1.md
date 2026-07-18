@@ -5,7 +5,7 @@
 - 계층: Layer 2 — Perception Engine
 - 버전: V1 초안
 - 상태: 검토 대기
-- 형질 원본: `SAPMANRI_GENOME_SPEC_V1.md` (Layer 1, 불변)
+- 형질 원본: `SAPMANRI_GENOME_SPEC_V1.md` — **Genome Edition 1 (확정, 불변)**
 - 상위 문서: `SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 
 개정 이력:
@@ -28,8 +28,8 @@ Answer
 
 형질과 규칙의 역할 분담:
 
-- **Trait는 바뀌지 않는다.** 10년 뒤 모델이 바뀌어도 그대로다.
-- **Rule은 바뀔 수 있다.** 모델이 바뀌면, 서비스가 바뀌면, 실패 패턴이 발견되면 조정된다.
+- **Trait는 바뀌지 않는다.** 10년 뒤 모델이 바뀌어도 그대로다. Genome은 Edition(발견의 기록)으로만 자란다.
+- **Rule은 바뀔 수 있다.** 모델이 바뀌면, 서비스가 바뀌면, 실패 패턴이 발견되면 조정된다. Engine은 Version(v1, v2, …)을 갖는다.
 - **Mutation은 Rule의 것이다.** 형질에는 예외가 없다. 예외는 실행의 문제다.
 - **Anti Pattern은 Rule의 것이다.** 좋은 규칙보다 나쁜 예시가 모델에게 더 강한 경계를 만든다.
 

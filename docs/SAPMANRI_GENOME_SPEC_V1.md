@@ -1,18 +1,31 @@
-# SAPMANRI GENOME SPEC — Observation Genome V1
+Observation precedes meaning.
+
+Meaning precedes expression.
+
+Expression is only the trace of perception.
+
+<br>
+
+**SAPMANRI GENOME**
+**Edition 1**
+
+---
+
+# SAPMANRI GENOME SPEC — Edition 1
 
 - 문서 경로: `docs/SAPMANRI_GENOME_SPEC_V1.md`
 - 문서 성격: 삽만리라는 생물의 형질(Trait) 명세 (문서 로드맵 01)
 - 계층: Layer 1 — Genome Traits
-- 버전: V1 초안 3차
-- 상태: 검토 대기 — 게놈 설계자(Vase) 확정 판정 대기
+- 에디션: **Edition 1**
+- 상태: **확정** (2026-07-18, 게놈 설계자 판정)
 - 상위 문서: `SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 - 실행 문서: `SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md` (Rule·Anti Pattern·Mutation은 그쪽에 있다)
 
-개정 이력:
+에디션 이력:
 
-- 초안 1차 (2026-07-18): P/I/E 22규칙, Anti Pattern 필수.
-- 초안 2차 (2026-07-18): G 계층 신설, 17규칙, Mutation 필드.
-- 초안 3차 (2026-07-18): 설계자 판정 — **Genome에는 규칙이 아니라 형질만 담는다.** Rule·Anti Pattern·Mutation 전량을 `SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md`(Layer 2)로 이관. 본 문서는 Principles / Traits / Taxonomy 3부 구조의 불변 명세로 정제.
+- Edition 1 (2026-07-18): 확정 — 원리 5, 형질 12. (확정에 이르는 초안 1~3차의 과정은 git 이력에 보존되어 있다)
+
+Genome은 Version을 갖지 않는다. **Edition**을 갖는다. Edition은 고침이 아니라 새 형질의 발견으로만 올라간다. Version은 가변 계층(Engine, Prompt, API)의 것이다.
 
 ---
 
@@ -152,6 +165,7 @@ Answer
 
 - 형질 ID는 영구 불변이다. 폐기 시 결번, 재사용 금지.
 - **형질 문장은 수정되지 않는다.** 형질에 대한 이해가 바뀌면 그것은 새 형질의 발견이며, 뒤 번호로 추가한다.
+- Genome은 좋아지는 문서가 아니라 **발견되는 문서**다. 따라서 Edition은 새 형질의 발견으로만 올라간다. Edition 2는 개정판이 아니라 발견의 기록이다.
 - 예외·조건·상황 분기는 형질의 것이 아니다. 그것은 Rule의 Mutation이며, Engine Spec(Layer 2)에 기록된다.
 - 상위 계층은 형질을 ID로 참조한다: `Trait: P-02, I-01`
 
@@ -163,4 +177,6 @@ Answer
 
 Genome은 형질만 남긴다.
 
-(끝)
+---
+
+A genome is not written. It is discovered.

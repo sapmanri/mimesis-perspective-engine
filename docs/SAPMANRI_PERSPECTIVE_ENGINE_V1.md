@@ -2,7 +2,7 @@
 
 - 문서 경로: `docs/SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 - 문서 성격: 구현 전 설계 정본
-- 버전: V1.5
+- 버전: V1.6
 - 상태: 정본 확정 (2026-07-18)
 - 저장 위치: `sapmanri/mimesis-perspective-engine` `docs/` — 정본 위치.
 
@@ -14,6 +14,7 @@
 - V1.3 (2026-07-18): 정식 명칭을 **Perception Engine**으로 확정, 문서 전체 통일. 1.4에 Genome↔Engine 관계 스택과 모델 독립 원칙 추가. 18절 문서 로드맵(01 Genome Spec → 02 System Prompt → 03 Evaluation → 04 API → 05 MVP) 신설.
 - V1.4 (2026-07-18): 1.4의 스택을 계층 모델 Layer 0~5로 확정 (Safety & Truth Contract, System Prompt Generator 명시). 사실성·안전·모델 정책의 Genome 배제 규율 명문화. `SAPMANRI_GENOME_SPEC_V1.md` 초안 작성 시작.
 - V1.5 (2026-07-18): 계층 모델 재확정 — **Layer 0 Observation / 1 Genome Traits(불변) / 2 Perception Engine / 3 Safety & Truth / 4 Prompt Generator / 5 LLM**. Genome은 규칙이 아니라 **형질(Trait)의 집합**이며 불변. Rule·Anti Pattern·Mutation은 Layer 2로 이관 (`SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md` 신설). 18절 로드맵 6단계로 갱신.
+- V1.6 (2026-07-18): **Genome Edition 1 확정** (게놈 설계자 판정). Edition/Version 표기 규약(Genome만 Edition, 발견으로만 증가), 내부 호칭 Genome/Engine/Prompt 기록.
 
 ---
 
@@ -108,6 +109,10 @@ Trait (형질, 불변) → Rule (실행 규칙, 가변) → Answer
 - **실행 규칙, Anti Pattern, Mutation(예외)도 Genome에 넣지 않는다** — Layer 2의 책임. Genome은 불변이므로 예외를 갖지 않는다. 예외는 실행의 문제다.
 
 Genome Spec(`SAPMANRI_GENOME_SPEC_V1.md`)은 형질만, Engine Spec(`SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md`)은 규칙을 담는다.
+
+표기 규약: **Genome만 Edition을 갖는다** — Edition은 고침이 아니라 새 형질의 발견으로만 올라간다. Engine·Prompt·API는 Version(v1, v2, …)을 갖는다. Genome Edition 1은 2026-07-18 확정되었다.
+
+내부 호칭: 일상 대화에서는 **Genome / Engine / Prompt** 세 단어로 부른다. Genome이 하나이므로 Engine도 하나다 — Perception을 매번 붙이지 않는다. 문서명은 유지한다.
 
 이 분리에서 나오는 원칙이 **모델 독립성(Model-agnostic)**이다. Genome은 AI 프롬프트가 아니라 철학과 규칙의 명세로 작성한다. 그 명세 위에서 Claude용, GPT용, Gemini용, 로컬 LLM용 System Prompt를 각각 생성한다. 모델이 바뀌어도 Genome은 건드리지 않고 프롬프트만 새로 생성한다.
 
@@ -1231,7 +1236,7 @@ UI까지 과도하게 감성적으로 만들지 않는다.
 이 문서(본 정본)는 전체 설계의 출발점이며, 이후 문서는 다음 순서로 작성한다.
 
 ```
-01. SAPMANRI_GENOME_SPEC_V1.md
+01. SAPMANRI_GENOME_SPEC_V1.md — Genome Edition 1 확정 ✅
     삽만리라는 생물의 형질(Trait) 명세 — 불변. 규칙도 프롬프트도 아니다.
         ↓
 02. SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md
