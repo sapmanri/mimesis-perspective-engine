@@ -2,7 +2,7 @@
 
 - 문서 경로: `docs/SAPMANRI_PERSPECTIVE_ENGINE_V1.md`
 - 문서 성격: 구현 전 설계 정본
-- 버전: V1.7
+- 버전: V1.8
 - 상태: 정본 확정 (2026-07-18)
 - 저장 위치: `sapmanri/mimesis-perspective-engine` `docs/` — 정본 위치.
 
@@ -16,6 +16,7 @@
 - V1.5 (2026-07-18): 계층 모델 재확정 — **Layer 0 Observation / 1 Genome Traits(불변) / 2 Perception Engine / 3 Safety & Truth / 4 Prompt Generator / 5 LLM**. Genome은 규칙이 아니라 **형질(Trait)의 집합**이며 불변. Rule·Anti Pattern·Mutation은 Layer 2로 이관 (`SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md` 신설). 18절 로드맵 6단계로 갱신.
 - V1.6 (2026-07-18): **Genome Edition 1 확정** (게놈 설계자 판정). Edition/Version 표기 규약(Genome만 Edition, 발견으로만 증가), 내부 호칭 Genome/Engine/Prompt 기록.
 - V1.7 (2026-07-18): **프롬프트는 창작물이 아니라 파생물** 원칙 명문화. 로드맵에 03 `SAPMANRI_PROMPT_BLUEPRINT_V1.md`(사람이 읽는 설계) 삽입, 04는 `CLAUDE_SYSTEM_PROMPT_V1.md`(첫 번째 구현체)로 개명 — 총 7단계. Genome 프로젝트 종료 선언(헌법 제정): 이후 모든 문서는 헌법을 만드는 문서가 아니라 구현하는 문서.
+- V1.8 (2026-07-18): Blueprint에 **Observation Layer** 삽입 반영(아키텍트 판정) — 질문은 분류되기 전에 해부된다. 파이프라인 6단계, Observation Table(type + confidence)이 1차 라우팅, 형질 발현표는 확정 보류.
 
 ---
 
@@ -1249,7 +1250,7 @@ UI까지 과도하게 감성적으로 만들지 않는다.
     Trait를 Rule로 실행하는 명세 — Anti Pattern·Mutation은 여기 있다.
         ↓
 03. SAPMANRI_PROMPT_BLUEPRINT_V1.md
-    사람이 읽는 설계 — 파이프라인 5단계와 Prompt AST. 모델 독립.
+    사람이 읽는 설계 — Observation 파이프라인 6단계와 Prompt AST. 모델 독립.
         ↓
 04. CLAUDE_SYSTEM_PROMPT_V1.md
     기계가 읽는 번역 — Blueprint의 첫 번째 구현체. GPT는 두 번째.
