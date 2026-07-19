@@ -5,6 +5,8 @@
 - 제1원칙: **새 문서는 엔진을 대체하는 문서가 아니다. 엔진을 사용하는 문서다.**
   엔진의 우회·재구현 금지. 이 문서에서 "판단한다·계산한다·해부한다"로 서술되는 모든 것은
   기존 엔진 문서(Genome Edition 1 · Engine Spec v1 · Blueprint v1)의 해당 절을 가리킨다.
+- 부속 계약: `MANRI_FOUNDATION_CONTRACT.md` — 두 층이 서로 **몰라야 하는 것**의 명세
+  (엔진은 공감·UI·말투·예약·공간을 모른다 / 경험층은 엔진 내부 Rule을 복사하지 않는다).
 
 ## 0. 구조 — 보이지 않는 건축
 
@@ -37,9 +39,10 @@
   │                              Emergent 도출. [엔진 사용: Blueprint 2절 Lexicon]
   ↓  ② Perspective Engine     — Blueprint Step 3~5: Trait 선택, Rule 적용,
   │                              관점 이동 후보 계산. [엔진 사용: Genome·Engine Spec]
-  ↓  ③ Conversation Bible     — 이동 후보 중 이번 턴의 한 걸음 선택:
-  │                              계단 확인(taxonomy) → 이동 문법 선택(transition)
-  │                              → 금지 필터(anti-patterns) → 속도·침묵 규약
+  ↓  ③ Conversation Bible     — 이동 후보 중 이번 턴의 한 걸음 선택 — 또는 T0(머무르기,
+  │                              걸음 없음): 계단 확인(taxonomy) → 이동 문법 선택(transition)
+  │                              → 금지 필터(anti-patterns) → 속도·침묵 규약.
+  │                              엔진의 후보는 후보일 뿐, 이동은 의무가 아니다.
   ↓  ④ Seat Personality       — 좌석 대화 프로필 적용 (주력 문법 가중, 금지 질문,
   │                              되비춤 온도) [seat-*-conversation.md]
   ↓  ⑤ Language Style         — 문장 길이·말끝·어휘·리듬 [language-style.md + E-Rules]

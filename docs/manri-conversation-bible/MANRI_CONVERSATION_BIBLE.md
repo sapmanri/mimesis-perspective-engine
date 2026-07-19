@@ -21,7 +21,7 @@
 |---|---|
 | `conversation-philosophy.md` | 왜 답을 먼저 말하지 않는가 — 대화 철학 |
 | `question-taxonomy.md` | 질문의 계층 (관찰→사실→감정→관점→의미→삶) |
-| `question-transition.md` | **가장 중요** — 질문을 옮기는 10가지 이동 문법 |
+| `question-transition.md` | **가장 중요** — 머무름(T0)과 질문을 옮기는 10가지 이동 문법 |
 | `seat-fireplace-conversation.md` | 벽난로 자리의 대화 |
 | `seat-desk-conversation.md` | 책상 자리의 대화 |
 | `seat-reading-chair-conversation.md` | 큰 의자 자리의 대화 |

@@ -7,16 +7,18 @@
 - **Claude**: 개발자 · 초안 작성 — 초안을 만들고 판정을 받는다. 판정 없이 확정하지 않는다.
 
 ## 헌법 (읽기 순서 — 이 문서들과 충돌하는 코드·문서는 쓸 수 없다)
-1. `docs/MANRI_LIBRARY_MANIFESTO.md` — 철학 선언 (모든 결정의 기준)
-2. `docs/MIMESIS_OBSERVATION_ARCHITECTURE.md` — 공개 문서 (30초 설명)
-3. `docs/SAPMANRI_GENOME_SPEC_V1.md` — **Genome Edition 1, 확정·영구 불변** (형질 문장 수정 절대 금지 — 새 형질은 설계자 판정으로만 뒤 번호 추가)
-4. `docs/SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md` — Engine v1 (Rule·Anti·Mutation)
-5. `docs/SAPMANRI_PROMPT_BLUEPRINT_V1.md` — Blueprint v1 (파이프라인·Lexicon·AST)
-6. `docs/SAPMANRI_PERSPECTIVE_ENGINE_V1.md` — 정본 (계층 모델·로드맵·안전 계약 9절)
-7. `docs/MANRI_INTEGRATION_BIBLE.md` — 엔진↔경험층 연결 (**제1원칙: 엔진을 우회·재구현하지 말고 사용한다**)
-8. `docs/manri-visual-bible/` — 공간의 헌법 (검수 대기)
-9. `docs/manri-conversation-bible/` — 대화의 헌법 + 예시 107편 (검수 대기)
-10. `docs/MANRI_LIBRARY_EXPRESSION_V2.md` — 현행 서비스 표현 명세
+1. `docs/MIMESIS_CONSTITUTION.md` — **최상위 헌법** (만리서재·별·미래 서비스 전부, 검수 대기) — 제0조 안전, 제1~5조
+2. `docs/MANRI_LIBRARY_MANIFESTO.md` — 사용자 선언문 v1.1 (문을 연 사람이 처음 만나는 헌법, 검수 대기)
+3. `docs/MIMESIS_OBSERVATION_ARCHITECTURE.md` — 공개 문서 (30초 설명)
+4. `docs/SAPMANRI_GENOME_SPEC_V1.md` — **Genome Edition 1, 확정·영구 불변** (형질 문장 수정 절대 금지 — 새 형질은 설계자 판정으로만 뒤 번호 추가)
+5. `docs/SAPMANRI_PERCEPTION_ENGINE_SPEC_V1.md` — Engine v1 (Rule·Anti·Mutation)
+6. `docs/SAPMANRI_PROMPT_BLUEPRINT_V1.md` — Blueprint v1 (파이프라인·Lexicon·AST)
+7. `docs/SAPMANRI_PERSPECTIVE_ENGINE_V1.md` — 정본 (계층 모델·로드맵·안전 계약 9절)
+8. `docs/MANRI_INTEGRATION_BIBLE.md` — 엔진↔경험층 연결 (**제1원칙: 엔진을 우회·재구현하지 말고 사용한다**)
+9. `docs/MANRI_FOUNDATION_CONTRACT.md` — 상호 무지 계약 (엔진은 공감·UI·말투·예약·공간을 모른다 / 경험층은 Rule을 복사하지 않는다, 검수 대기)
+10. `docs/manri-visual-bible/` — 공간의 헌법 (검수 대기)
+11. `docs/manri-conversation-bible/` — 대화의 헌법 + T0·이동 문법 + 예시 107편 (검수 대기)
+12. `docs/MANRI_LIBRARY_EXPRESSION_V2.md` — 현행 서비스 표현 명세 (v2.1 개정 대기 — 예약 문장 의식·용어 규율 반영)
 
 ## 절대 원칙 (전부 Vase 판정으로 확정된 것)
 - **프롬프트는 창작물이 아니라 파생물** — `functions/_lib/prompt.ts`는 `docs/CLAUDE_SYSTEM_PROMPT_V1.md`에서 기계 추출. 수정은 문서에서만: `node scripts/verify-prompt.mjs --write`. 게이트: `npm run verify` (배포 전 필수).
@@ -41,6 +43,8 @@
 - GitHub Pages(문서 열람용)는 main/root Jekyll — 문서에 `{{` `{%` 넣지 말 것.
 - 명령 체인 `&&`만, 게이트는 `> log 2>&1; RC=$?`로 exit 직접 검사, 검증기는 음성 테스트 필수.
 
-## 현재 상태 (2026-07-19)
-확정: 헌법 1~7 + Expression V2. **검수 대기: Visual Bible · Manifesto · Conversation Bible(107예시) · Integration Bible.**
-다음(검수 후 순서): 기준 컷 생성(master-space-prompt) → 좌석 이동 프로토타입 → 프롬프트 v3 재번역(Integration 파이프라인) → 실측 → 테스트 20문항 평가(로드맵 05).
+## 현재 상태 (2026-07-19 저녁 — 1차 검수 반영)
+1차 검수 판정 접수: Visual ★5 · Integration ★5 · Conversation ★4 · Manifesto ★4. 판정 반영 완료:
+Manifesto v1.1(사용자 선언문화) · T0 머무르기+기계화 방지 · 예약 문장 허락체 · **신설 2건**(MIMESIS Constitution · Foundation Contract) · Constitution Validation 보고(`docs/CONSTITUTION_VALIDATION_20260719.md`).
+**판정 대기 4건** (Validation 상세 1~4): ① silence.md "불이 한 번 일렁인다" vs 제4조 (초안 의견: 삭제) ② Expression v2.1 개정(예약 의식 삽입) ③ "엔진" 용어 혼용 정리 ④ KPI '스스로' 측정 설계.
+다음(판정 후 순서): 신설·개정 문서 확정 → 기준 컷 생성(master-space-prompt) → 좌석 이동 프로토타입 → 프롬프트 v3 재번역(Integration 파이프라인) → 실측 → 테스트 20문항 평가(로드맵 05).
