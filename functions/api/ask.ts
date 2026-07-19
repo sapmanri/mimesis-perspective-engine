@@ -91,7 +91,9 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   try {
     response = await client.messages.create({
       model: "claude-opus-4-8",
-      max_tokens: 1024,
+      // 사고 토큰 + 구조화 출력(reply·movement·signals)이 함께 들어간다.
+      // 1024는 부족해서 JSON이 중간에 잘렸다 (실사용 확인 2026-07-20).
+      max_tokens: 4096,
       thinking: { type: "adaptive" },
       system: [
         { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
@@ -127,7 +129,12 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
     .join("\n")
     .trim();
 
-  // 구조화 출력: { reply, movement:{code,name,triggers} }
+  // 출력이 잘렸으면 부분 JSON이다 — 절대 사용자에게 보내지 않는다.
+  if (response.stop_reason === "max_tokens") {
+    return json({ error: "말이 길어져 끝맺지 못했습니다. 다시 한번 적어주세요." }, 502);
+  }
+
+  // 구조화 출력: { reply, movement:{code,name,triggers}, signals }
   let reply = "";
   let movement: { code?: string; name?: string; triggers?: string[] } | null = null;
   let signals: string[] = [];
@@ -141,8 +148,27 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
     movement = parsed.movement ?? null;
     signals = Array.isArray(parsed.signals) ? parsed.signals : [];
   } catch {
-    reply = raw; // 스키마가 깨져도 대화는 계속된다 — 이동만 기록되지 않는다.
+    // 스키마가 깨져도 원출력을 그대로 흘리지 않는다 — reply 필드만 건져낸다.
+    const salvaged = raw.match(/"reply"\s*:\s*("(?:[^"\\]|\\.)*")/);
+    if (salvaged) {
+      try {
+        reply = (JSON.parse(salvaged[1]) as string).trim();
+      } catch {
+        reply = "";
+      }
+    }
   }
+
+  // 최종 방어선: 내부 표지가 한 글자라도 섞였으면 내보내지 않는다.
+  // (이동 코드·신호·스키마 키는 사용자에게 절대 보이지 않는다 — 보이면 공략집이 된다.)
+  const leaked =
+    /"(reply|movement|triggers|signals|code|name)"\s*:/.test(reply) ||
+    /\b(T(?:10|[0-9]))\b/.test(reply) ||
+    [...TRIGGER_IDS, ...SIGNAL_IDS].some((id) => reply.includes(id));
+  if (leaked) {
+    return json({ error: "말을 고르지 못했습니다. 다시 한번 적어주세요." }, 502);
+  }
+
   if (!reply) return json({ error: "말을 고르지 못했습니다. 다시 한번 적어주세요." }, 502);
 
   const entry: MovementLog | null = movement?.code
