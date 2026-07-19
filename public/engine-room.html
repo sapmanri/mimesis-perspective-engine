@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>만리서재 — 관점 엔진 작동실</title>
+  <style>
+    :root { color-scheme: light; --paper:#f7f3ec; --ink:#2b2722; --muted:#8d857a; --line:#d8d0c5; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:var(--paper); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif; }
+    main { width:min(760px, calc(100% - 32px)); margin:0 auto; padding:48px 0 72px; }
+    header { margin-bottom:36px; }
+    h1 { margin:0 0 10px; font-family:Georgia,serif; font-weight:400; font-size:36px; }
+    .sub { margin:0; color:var(--muted); line-height:1.7; }
+    .seats { display:flex; gap:8px; flex-wrap:wrap; margin:24px 0 34px; }
+    .seat { border:1px solid var(--line); background:transparent; border-radius:999px; padding:10px 14px; color:var(--ink); cursor:pointer; }
+    .seat[aria-pressed="true"] { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+    #manuscript { border-top:1px solid var(--line); padding-top:28px; min-height:260px; }
+    .turn { margin:0 0 26px; line-height:1.8; white-space:pre-wrap; }
+    .turn.user { margin-left:auto; width:min(82%, 610px); padding-left:24px; border-left:2px solid var(--line); }
+    .turn.library { font-family:Georgia,"Times New Roman",serif; font-size:20px; line-height:1.75; }
+    .turn.waiting { color:var(--muted); font-size:14px; }
+    form { margin-top:30px; }
+    textarea { width:100%; min-height:96px; resize:vertical; border:0; border-bottom:1px solid var(--ink); background:transparent; color:var(--ink); padding:12px 2px; font:inherit; font-size:17px; line-height:1.6; outline:none; }
+    textarea:focus { border-bottom-width:2px; }
+    .actions { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-top:14px; }
+    button { font:inherit; }
+    .send { border:0; border-radius:999px; padding:11px 17px; background:var(--ink); color:var(--paper); cursor:pointer; }
+    .ghost { border:0; background:transparent; color:var(--muted); cursor:pointer; padding:8px 0; }
+    #error { color:#8a352e; line-height:1.5; }
+    .status { font-size:12px; color:var(--muted); letter-spacing:.08em; margin-top:8px; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>만리서재</h1>
+    <p class="sub">그래픽 없이, 관점 엔진의 이동만 확인하는 작동실입니다.<br />정해진 질문 목록은 없습니다.</p>
+    <p class="status" id="status">관점 엔진 대기 중</p>
+  </header>
+
+  <div class="seats" aria-label="자리 선택">
+    <button class="seat" data-seat="fireplace" aria-pressed="true">벽난로 옆 흔들의자</button>
+    <button class="seat" data-seat="desk" aria-pressed="false">낡은 책상과 타자기</button>
+    <button class="seat" data-seat="nook" aria-pressed="false">책 더미와 무릎담요</button>
+  </div>
+
+  <section id="manuscript" aria-live="polite">
+    <p class="turn library">오늘 어떤 질문을 품고 오셨나요?</p>
+  </section>
+
+  <form id="write-form">
+    <label for="writing" style="position:absolute;left:-9999px">질문 또는 답변</label>
+    <textarea id="writing" maxlength="1000" placeholder="한 문장이어도 괜찮습니다."></textarea>
+    <div class="actions">
+      <button type="button" class="ghost" id="reset">처음부터</button>
+      <button type="submit" class="send" id="send">적어 놓습니다</button>
+    </div>
+  </form>
+  <p id="error" role="alert" hidden></p>
+</main>
+<script src="/engine-room.js"></script>
+</body>
+</html>
