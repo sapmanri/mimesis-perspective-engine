@@ -172,7 +172,7 @@
       <h2>예약하고 오셨나요?</h2>
       <p>문 앞에서 받은 문장을 들려주세요.</p>
       <input id="phraseInput" class="phrase-input" autocomplete="off" placeholder="입장 문장을 적어주세요" />
-      <div class="hint">프로토타입 문장: 따사로움은 눈부심이 부럽지 않습니다</div>
+      <div class="hint" id="gateHint"></div>
       <div class="btn-row">
         <button class="btn ghost" id="gateBack">돌아가기</button>
         <button class="btn primary" id="enterReserved">문장 들려주기</button>
@@ -225,6 +225,7 @@ const tourPanel = document.getElementById('tourPanel');
 const seatPanel = document.getElementById('seatPanel');
 const status = document.getElementById('status');
 const phraseInput = document.getElementById('phraseInput');
+const gateHint = document.getElementById('gateHint');
 const msgBox = document.getElementById('messages');
 const answer = document.getElementById('answer');
 let currentSeat = 'fire';
@@ -257,6 +258,9 @@ const seats = {
   }
 };
 
+// 백엔드 좌석 키 → 화면 키 (서재가 배정한 자리를 화면에 앉힌다)
+const SEAT_BY_KEY = Object.fromEntries(Object.entries(seats).map(([ui,s])=>[s.key,ui]));
+
 // 세션 상태 — 이력은 이 페이지 안에서만 산다(서버는 무상태).
 let uuid = null;
 let messages = [];
@@ -286,28 +290,56 @@ document.getElementById('openDoor').onclick=enterRoom;
 document.getElementById('tourBtn').onclick=()=>{
   reserved=false; hide(modeScreen); hotspots.classList.add('active'); show(tourPanel); status.textContent='FREE TOUR · NO SESSION';
 };
-document.getElementById('reserveBtn').onclick=()=>{hide(modeScreen);show(gateScreen);setTimeout(()=>phraseInput.focus(),300)};
+document.getElementById('reserveBtn').onclick=()=>{hide(modeScreen);show(gateScreen);gateHint.textContent='';setTimeout(()=>phraseInput.focus(),300)};
 document.getElementById('gateBack').onclick=()=>{hide(gateScreen);show(modeScreen)};
-document.getElementById('enterReserved').onclick=()=>{
-  const v=phraseInput.value.trim().replace(/[.!?。]/g,'');
-  if(!v){phraseInput.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'none'}],{duration:260});return}
-  reserved=true;
-  hide(gateScreen);
-  status.textContent='RESERVATION CONFIRMED · FIREPLACE SEAT';
-  setTimeout(()=>openSeat('fire'),650);
+
+// 문턱 — 문장 판정은 서버(/api/enter)가 한다. 이 파일에는 문장이 없다.
+// 통과하면 서버가 예약 티켓(uuid)과 자리를 함께 발급한다(자리는 서재가 정한다).
+const enterBtn=document.getElementById('enterReserved');
+enterBtn.onclick=async ()=>{
+  const said=phraseInput.value.trim();
+  if(!said){phraseInput.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'none'}],{duration:260});phraseInput.focus();return}
+  if(enterBtn.disabled)return;
+  enterBtn.disabled=true;gateHint.textContent='문장을 확인하고 있습니다…';
+  try{
+    const res=await fetch('/api/enter',{
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({phrase:said})
+    });
+    let data=null; try{ data=await res.json(); }catch{ data=null; }
+    if(!res.ok||!data){throw new Error((data&&data.error)||'서재와 연결되지 않았습니다. 잠시 후 다시 시도해 주세요.')}
+    reserved=true;
+    gateHint.textContent='';
+    hide(gateScreen);
+    const uiKey=SEAT_BY_KEY[data.seat]||'fire';
+    status.textContent='RESERVATION CONFIRMED';
+    setTimeout(()=>openSeat(uiKey,data.uuid),650);
+  }catch(err){
+    // 예약이 없으면 예약제 규칙을 그대로 보여준다(서버 문구).
+    gateHint.textContent=humanError(err,'문장을 확인하지 못했습니다.');
+  }finally{
+    enterBtn.disabled=false;
+  }
 };
 document.getElementById('tourExit').onclick=()=>{
   hide(tourPanel);hotspots.classList.remove('active');resetRoom();show(modeScreen);
 };
-document.querySelectorAll('.spot').forEach(btn=>btn.onclick=()=>openSeat(btn.dataset.seat));
+// 둘러보기에서는 세 자리를 보여주되 앉히지 않는다 — 예약제 규칙을 그대로 말하고 문턱으로 돌린다.
+document.querySelectorAll('.spot').forEach(btn=>btn.onclick=()=>{
+  hotspots.classList.remove('active');hide(tourPanel);resetRoom();
+  show(gateScreen);
+  gateHint.textContent='이 자리에 앉는 것은 예약하신 분께 안내됩니다.';
+  setTimeout(()=>phraseInput.focus(),300);
+});
 
-function openSeat(key){
+// issuedUuid = /api/enter가 발급한 예약 티켓. 이게 없으면 대화 API가 열리지 않는다.
+function openSeat(key,issuedUuid){
   // 앉으면 방의 다른 안내는 전부 접는다. 대화창이 반투명이라, 남아 있으면
   // 입력칸 뒤로 글자가 비쳐 보인다(푸터·현관 카드).
   hide(doorScreen);hide(modeScreen);hide(gateScreen);
   footerNote.hidden=true;
   currentSeat=key;
-  uuid=crypto.randomUUID();messages=[];busy=false;closed=false;riseFailed=false;
+  uuid=issuedUuid;messages=[];busy=false;closed=false;riseFailed=false;
   composerBox.hidden=false;answer.placeholder='한 문장이어도 괜찮습니다.';
   riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   room.className='room entered focus-'+key;

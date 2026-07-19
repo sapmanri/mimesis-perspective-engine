@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT } from "../_lib/prompt";
 import { json, rateLimitKey, type Env } from "../_lib/common";
 import { SEATS, validateConversation, saveVisit, type Turn } from "../_lib/visit";
+import { NOT_RESERVED_MESSAGE, passValid } from "../_lib/pass";
 
 // 자리에서 일어나기 — 결론이 아니라 사용자의 변화를 정리해 돌려준다.
 const CLOSING_SCHEMA = {
@@ -33,6 +34,9 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   }
   if (!/^[0-9a-f-]{36}$/.test(uuid) || !SEATS[seat]) {
     return json({ error: "잘못된 요청입니다." }, 400);
+  }
+  if (!(await passValid(env, uuid, seat))) {
+    return json({ error: NOT_RESERVED_MESSAGE }, 403);
   }
   const invalid = validateConversation(messages);
   if (invalid && messages.length <= 60) return json({ error: invalid }, 400);

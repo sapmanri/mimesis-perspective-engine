@@ -6,6 +6,8 @@ export interface Env {
   GENOME_EDITION: string;
   ENGINE_VERSION: string;
   PROMPT_VERSION: string;
+  // 입장 문장(예약 확인). 미설정 시 _lib/pass.ts의 기본값을 쓴다.
+  ENTRY_PHRASE?: string;
 }
 
 export const json = (data: unknown, status = 200): Response =>
