@@ -71,4 +71,4 @@
 1. Visual Bible 검수·확정 (Vase)
 2. 공간 시안 생성 — master-space-prompt로 기준 컷 확정, 이후 모든 생성의 reference
 3. 좌석 이동 프로토타입
-4. 대화 엔진 개편 결합
+4. 대화 결합 (Conversation Bible + Integration 파이프라인)
