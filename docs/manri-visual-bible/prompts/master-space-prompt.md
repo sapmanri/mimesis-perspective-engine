@@ -79,9 +79,16 @@ chair on the left, desk beneath the north window at center distance, the window
 holding the last fading blue-grey dusk light rather than glowing daylight, lamp
 light and the partial outline of the armchair on the right, rug edge in the lower
 foreground. All three pools of light visible as parts of one continuous room.
-Early evening. Show only what this viewpoint would naturally reveal; do not force
-every fixed object to face the camera or become fully visible. + [NEGATIVE]
+Early evening. One quiet trace of recent presence: a last faint thread of steam
+still rising from the enamel mug on the side table, as if someone rose from the
+rocking chair only moments ago. No one waiting, nothing staged. Show only what
+this viewpoint would naturally reveal; do not force every fixed object to face
+the camera or become fully visible. + [NEGATIVE]
 ```
+
+- 흔적의 규칙 (Vase 판정): 이 방은 전시장이 아니라 **예약이 있는 공간**이다 — 방금
+  누군가 쓰고 일어난 흔적 **하나만** 허용 (머그의 옅은 김). "사용자를 기다리는 연출"은
+  절대 금지 — 기다림이 아니라, 조금 전까지 사용되고 있었다는 사실만.
 
 - 저녁 기준 컷의 빛 해석 (Vase 판정): firelight 1900K · lamp 2400K · 북창은
   **fading blue-grey dusk ambient light**. [SPACE]의 5000K 회백 북광은 **낮 장면의

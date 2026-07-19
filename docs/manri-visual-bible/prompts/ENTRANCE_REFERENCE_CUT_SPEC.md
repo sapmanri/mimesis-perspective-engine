@@ -66,6 +66,9 @@ lamp light and the partial outline of the armchair on the right,
 rug edge in the lower foreground.
 All three pools of light visible as parts of one continuous room.
 Early evening.
+One quiet trace of recent presence: a last faint thread of steam still rising from
+the enamel mug on the side table, as if someone rose from the rocking chair only
+moments ago. No one waiting, nothing staged.
 Show only what this viewpoint would naturally reveal; do not force every fixed object
 to face the camera or become fully visible.
 
@@ -90,7 +93,29 @@ no cinematic letterbox bars, no vignette heavier than subtle.
 - seed·도구명·버전을 생성 즉시 기록한다 (통과 컷의 재현 정보).
 - 후보는 여러 장 뽑아도 되지만 **확정은 1장** — 확정 전에는 어떤 좌석별 컷도 만들지 않는다.
 
-## 4. 전수 대조 체크리스트 (통과 = 전 항목 예)
+## 4. 합격 판정 — Reference Cut Acceptance Rule (Vase 판정 2026-07-19, 평가 순서 강제)
+
+**기준 컷은 예쁘다고 합격하지 않는다.** 사람은 첫 이미지를 보면 무조건 "예쁘다"부터
+보게 되므로, 평가 순서를 강제로 고정한다 — 아래 순서를 건너뛰거나 뒤섞지 않는다:
+
+```text
+1 공간이 맞는가 → 2 빛이 맞는가 → 3 카메라가 맞는가 → 4 재질이 맞는가
+→ 5 (마지막으로) 분위기가 맞는가
+```
+
+관문 질문 3개 — 순서대로, 전부 YES여야 다음으로:
+
+1. **이 방이 실제로 존재한다고 믿어지는가?**
+2. **이 방에서 10년을 살았을 것 같은가?**
+3. **이 방은 다음 생성에서도 같은 방으로 다시 만들 수 있는가?**
+
+셋 다 통과한 뒤에야 마지막 질문이 온다 — 예쁜가?
+이 한 장은 이미지가 아니라 만리서재라는 세계의 창세기 1장이다. 예쁘게 나오면 성공이
+아니라, **앞으로 1,000장의 기준이 될 수 있으면 성공이다.**
+
+아래 체크리스트는 위 순서(공간→빛→카메라·재질→분위기)대로 실행한다.
+
+### 전수 대조 체크리스트 (통과 = 전 항목 예)
 
 평면·구도 (`spatial-layout.md` 3~4절 — **확정 기대치**: 세 좌석의 상품 사진이 아니라
 세 자리가 같은 방에 존재한다는 관계의 증명):
@@ -116,6 +141,11 @@ no cinematic letterbox bars, no vignette heavier than subtle.
 - [ ] 28mm 절제된 원근 — 어안·초광각 왜곡 없음, 드론·크레인 시점 아님, 24mm급 과장 없음
 - [ ] 무광 목재·황동·리넨 — 광택 니스·새것 느낌·소품 전시장 과밀 없음
 - [ ] 사람·손·글자·워터마크 없음
+
+흔적·분위기 (맨 마지막에만 본다):
+- [ ] 최근 사용의 흔적이 **머그의 옅은 김 하나뿐**인가 — 흔적이 둘 이상이면 연출이다, 폐기
+- [ ] "사용자를 기다리는 연출"로 읽히지 않는가 — 조금 전까지 사용되고 있었다는 사실만
+- [ ] 관문 질문 3개(존재 믿김 · 10년의 삶 · 재현 가능)를 통과했는가 — 그 다음에야: 예쁜가
 
 폐기 기준은 `negative-prompts.md` 하단 5항과 동일 — 하나라도 걸리면 폐기 후 재생성.
 
