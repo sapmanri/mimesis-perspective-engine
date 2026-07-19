@@ -1,127 +1,398 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>만리서재</title>
-  <meta name="description" content="질문을 통해 스스로 답을 발견하는 디지털 서재." />
-  <link rel="stylesheet" href="/style.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>만리서재</title>
+<meta name="description" content="질문을 통해 스스로 답을 발견하는 디지털 서재." />
+<style>
+  :root{
+    --paper:#f4eee4;
+    --ink:#28231e;
+    --muted:#b8aa99;
+    --warm:#c18149;
+    --green:#62705d;
+    --shadow:rgba(16,12,9,.72);
+    --glass:rgba(31,25,20,.54);
+    --line:rgba(244,238,228,.18);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#15110e;color:var(--paper);
+    font-family: "Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
+  button,input,textarea{font:inherit}
+  button{cursor:pointer}
+  #app{position:relative;width:100%;height:100%;isolation:isolate}
+  .room{
+    position:absolute;inset:-4%;
+    background-image:
+      linear-gradient(180deg,rgba(7,8,10,.16),rgba(20,13,8,.34)),
+      url("./manri-room.png");
+    background-size:cover;background-position:center;
+    transform:scale(1.05) translate3d(0,0,0);
+    transition:transform 2.2s cubic-bezier(.18,.75,.18,1),filter 1.5s ease,background-position 2.2s ease;
+    filter:saturate(.82) contrast(1.03) brightness(.78);
+    will-change:transform,filter,background-position;
+  }
+  .room::after{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(circle at 17% 63%,rgba(255,145,60,.20),transparent 22%),
+      radial-gradient(circle at 76% 54%,rgba(255,190,120,.12),transparent 20%),
+      radial-gradient(circle at 51% 30%,rgba(155,174,198,.11),transparent 22%),
+      linear-gradient(90deg,rgba(0,0,0,.22),transparent 24%,transparent 76%,rgba(0,0,0,.28));
+    mix-blend-mode:screen;pointer-events:none;
+  }
+  .room.entered{filter:saturate(.86) contrast(1.04) brightness(.87)}
+  .room.focus-fire{transform:scale(1.48) translate3d(20%,4%,0);background-position:10% 55%}
+  .room.focus-desk{transform:scale(1.46) translate3d(0,7%,0);background-position:50% 45%}
+  .room.focus-chair{transform:scale(1.5) translate3d(-18%,3%,0);background-position:90% 52%}
+  .grain{position:absolute;inset:0;pointer-events:none;opacity:.12;z-index:4;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E")}
+  .vignette{position:absolute;inset:0;pointer-events:none;z-index:5;
+    box-shadow:inset 0 0 180px 70px rgba(0,0,0,.48)}
+  .topbar{position:absolute;top:0;left:0;right:0;z-index:20;padding:22px 26px;display:flex;align-items:center;justify-content:space-between;
+    background:linear-gradient(180deg,rgba(12,9,7,.72),transparent)}
+  .brand{letter-spacing:.22em;font-size:14px;font-weight:650}
+  .status{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:#d4c7b6;opacity:.78}
+  .door-screen,.mode-screen,.gate-screen,.seat-panel,.tour-panel{
+    position:absolute;inset:0;z-index:30;display:grid;place-items:center;padding:24px;
+    transition:opacity .7s ease,visibility .7s ease;
+  }
+  .hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .veil{position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,rgba(20,16,13,.48),rgba(8,6,5,.9))}
+  .card{position:relative;z-index:1;width:min(560px,92vw);padding:38px 34px;border:1px solid rgba(255,255,255,.14);
+    background:linear-gradient(160deg,rgba(42,34,27,.78),rgba(21,16,12,.68));backdrop-filter:blur(18px);
+    border-radius:28px;box-shadow:0 28px 90px rgba(0,0,0,.46)}
+  .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#cdbba6;margin-bottom:20px}
+  h1,h2,p{margin-top:0}
+  h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(32px,6vw,58px);font-weight:400;line-height:1.08;margin-bottom:18px}
+  h2{font-family:Georgia,"Times New Roman",serif;font-size:clamp(28px,5vw,44px);font-weight:400;line-height:1.18}
+  p{line-height:1.78;color:#e2d7c9}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+  .btn{border:1px solid rgba(255,255,255,.18);color:var(--paper);background:rgba(255,255,255,.07);
+    padding:13px 18px;border-radius:999px;transition:.25s ease}
+  .btn:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
+  .btn.primary{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+  .btn.ghost{background:transparent}
+  .phrase-input{width:100%;margin-top:22px;padding:16px 18px;border-radius:16px;border:1px solid rgba(255,255,255,.18);
+    background:rgba(0,0,0,.22);color:white;outline:none}
+  .phrase-input:focus{border-color:rgba(255,255,255,.42)}
+  .hint{font-size:12px;color:#bda996;margin-top:10px}
+  .hotspots{position:absolute;inset:0;z-index:15;opacity:0;pointer-events:none;transition:opacity 1s ease}
+  .hotspots.active{opacity:1;pointer-events:auto}
+  .spot{position:absolute;width:92px;height:92px;border-radius:50%;border:1px solid rgba(255,255,255,.34);
+    background:radial-gradient(circle,rgba(255,255,255,.09),rgba(255,255,255,.01) 55%,transparent 70%);
+    display:grid;place-items:center;color:white;box-shadow:0 0 40px rgba(255,195,122,.12);
+    animation:pulse 3.4s ease-in-out infinite}
+  .spot::after{content:attr(data-label);position:absolute;top:104px;white-space:nowrap;font-size:12px;letter-spacing:.08em;
+    color:#efe5d8;text-shadow:0 2px 12px #000}
+  .spot.fire{left:13%;top:52%}.spot.desk{left:48%;top:51%}.spot.chair{right:11%;top:50%}
+  @keyframes pulse{0%,100%{transform:scale(.95);opacity:.7}50%{transform:scale(1.05);opacity:1}}
+  .tour-panel{place-items:end center;padding-bottom:34px;pointer-events:none}
+  .tour-copy{pointer-events:auto;width:min(680px,92vw);display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:16px 20px;border-radius:20px;background:var(--glass);backdrop-filter:blur(14px);border:1px solid var(--line)}
+  .tour-copy p{margin:0;font-size:14px;color:#e8dfd4}
+  .seat-panel{place-items:end center;padding-bottom:22px}
+  /* 헤더(나가는 길)와 입력칸은 고정, 대화만 스크롤된다.
+     예전엔 .dialog 전체가 스크롤돼서 대화가 길어지면 나가기 버튼이 위로 사라졌다. */
+  .dialog{
+    width:min(760px,94vw);height:min(76vh,690px);display:flex;flex-direction:column;overflow:hidden;
+    border:1px solid var(--line);
+    border-radius:26px;background:rgba(25,20,16,.80);backdrop-filter:blur(18px);box-shadow:0 22px 90px rgba(0,0,0,.55);
+    padding:24px;
+  }
+  .seat-head{flex:none;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:18px}
+  .seat-actions{display:flex;align-items:center;gap:8px;flex:none}
+  .rise-btn{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--paper);
+    padding:9px 14px;border-radius:999px;font-size:13px;white-space:nowrap;transition:.25s ease}
+  .rise-btn:hover{background:rgba(255,255,255,.13)}
+  .rise-btn:disabled{opacity:.45;cursor:default}
+  .seat-head h3{margin:0;font-family:Georgia,serif;font-size:26px;font-weight:400}
+  .seat-sub{font-size:12px;color:#bda996;margin-top:6px}
+  .close{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.04);color:white}
+  .messages{flex:1;min-height:0;overflow-y:auto;padding:18px 2px 4px;display:flex;flex-direction:column;gap:14px}
+  .msg{max-width:82%;padding:13px 16px;border-radius:18px;line-height:1.65;font-size:15px;animation:rise .45s ease both}
+  .msg.guide{align-self:flex-start;background:rgba(244,238,228,.09);border:1px solid rgba(255,255,255,.08)}
+  .msg.user{align-self:flex-end;background:#eee5d8;color:#29231e}
+  .msg.sys{align-self:flex-start;max-width:100%;background:none;border:none;padding:2px 4px;
+    font-size:13px;color:#bda996;font-style:italic}
+  @keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+  .composer{flex:none;display:flex;gap:10px;margin-top:14px}
+  .composer textarea{flex:1;resize:none;min-height:54px;max-height:130px;border-radius:17px;border:1px solid var(--line);
+    background:rgba(0,0,0,.22);color:#fff;padding:15px;outline:none;line-height:1.5}
+  .composer button{width:54px;border:none;border-radius:17px;background:#eee5d8;color:#29231e;font-weight:700}
+  .footer-note{position:absolute;bottom:16px;left:20px;z-index:12;font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.46)}
+  .fade-text{animation:fadeText 1.2s ease both}
+  @keyframes fadeText{from{opacity:0;filter:blur(4px)}to{opacity:1;filter:none}}
+  @media(max-width:720px){
+    .topbar{padding:16px}.status{display:none}.spot{width:68px;height:68px}.spot::after{top:78px;font-size:10px}
+    .spot.fire{left:8%;top:54%}.spot.desk{left:45%;top:52%}.spot.chair{right:7%;top:54%}
+    .card{padding:30px 22px}.room.focus-fire{transform:scale(1.6) translate3d(22%,3%,0)}
+    .room.focus-chair{transform:scale(1.62) translate3d(-22%,3%,0)}
+    .tour-copy{align-items:flex-start;flex-direction:column}
+  }
+</style>
 </head>
-<body data-phase="entrance">
+<body>
+<div id="app">
+  <div id="room" class="room"></div>
+  <div class="grain"></div><div class="vignette"></div>
+  <header class="topbar">
+    <div class="brand">만리서재</div>
+    <div class="status" id="status">ENTRANCE · EARLY EVENING</div>
+  </header>
 
-  <!-- 입장 -->
-  <section id="entrance" class="phase" aria-label="입구">
-    <div class="entrance-inner">
-      <h1>만리서재</h1>
-      <p class="intro">
-        모든 질문에는 저마다의 형태가 있습니다.<br />
-        이곳은 그 질문을 먼저 바라보는 서재입니다.
-      </p>
-      <button id="enter" class="quiet-button">문을 엽니다.</button>
+  <section id="doorScreen" class="door-screen">
+    <div class="veil"></div>
+    <div class="card fade-text">
+      <div class="eyebrow">MANRI LIBRARY · DIGITAL BRANCH</div>
+      <h1>문을 열고<br>조금 천천히 들어오세요.</h1>
+      <p>이곳에서는 답보다 질문을 오래 바라봅니다.<br>공간이 먼저 속도를 낮추고, 질문은 그 다음에 옵니다.</p>
+      <div class="btn-row"><button class="btn primary" id="openDoor">문 열기</button></div>
     </div>
   </section>
 
-  <!-- 예약석 -->
-  <section id="seats" class="phase" aria-label="예약석">
-    <p class="seats-guide">오늘은 어느 자리에 앉으시겠어요?</p>
-    <div class="seat-list">
-      <figure class="seat" data-seat="fireplace" tabindex="0" role="button" aria-label="벽난로 옆 흔들의자">
-        <div class="scene scene-fireplace">
-          <div class="glow"></div>
-          <svg class="silhouette" viewBox="0 0 200 130" aria-hidden="true">
-            <path d="M30 25 h44 v60 h-44 z" fill="#120c08" />
-            <path d="M36 40 h32 v45 h-32 z" fill="#2a160a" />
-            <g stroke="#171009" stroke-width="5" fill="none" stroke-linecap="round">
-              <path d="M122 118 q28 12 58 0" />
-              <path d="M140 110 L134 88 L142 44" />
-              <path d="M142 44 q12 -8 22 0" />
-              <path d="M136 86 h34" />
-              <path d="M170 86 L168 112" />
-              <path d="M139 92 h29" />
-              <path d="M144 68 h24 q4 0 4 6 l-2 12" />
-            </g>
-          </svg>
-        </div>
-        <figcaption>
-          <strong>벽난로 옆 흔들의자</strong>
-          <span>감정을 가라앉히는 자리</span>
-        </figcaption>
-      </figure>
-
-      <figure class="seat" data-seat="desk" tabindex="0" role="button" aria-label="낡은 책상과 타자기">
-        <div class="scene scene-desk">
-          <div class="beam"></div>
-          <svg class="silhouette" viewBox="0 0 200 130" aria-hidden="true">
-            <rect x="20" y="18" width="52" height="64" rx="2" fill="none" stroke="#8a7c62" stroke-width="3" />
-            <line x1="46" y1="18" x2="46" y2="82" stroke="#8a7c62" stroke-width="2" />
-            <line x1="20" y1="50" x2="72" y2="50" stroke="#8a7c62" stroke-width="2" />
-            <rect x="30" y="98" width="150" height="5" fill="#4a3e2e" />
-            <rect x="42" y="103" width="6" height="24" fill="#4a3e2e" />
-            <rect x="160" y="103" width="6" height="24" fill="#4a3e2e" />
-            <path d="M96 98 v-14 h44 v14 M100 84 v-8 h36 v8 M108 76 h20 v-6 h-20 z" fill="#3a3226" />
-            <rect x="150" y="92" width="18" height="3" fill="#3a3226" />
-          </svg>
-        </div>
-        <figcaption>
-          <strong>낡은 책상과 타자기</strong>
-          <span>생각을 정리하는 자리</span>
-        </figcaption>
-      </figure>
-
-      <figure class="seat" data-seat="nook" tabindex="0" role="button" aria-label="책 더미와 무릎담요">
-        <div class="scene scene-nook">
-          <div class="rain-window"><div class="rain"></div></div>
-          <div class="lamp"></div>
-          <svg class="silhouette" viewBox="0 0 200 130" aria-hidden="true">
-            <path d="M116 128 v-52 q0 -10 10 -10 h44 q10 0 10 10 v52" fill="#0b0e15" />
-            <rect x="122" y="86" width="52" height="26" rx="4" fill="#161b28" />
-            <rect x="24" y="112" width="52" height="8" fill="#0b0e15" />
-            <rect x="30" y="104" width="44" height="8" fill="#111624" />
-            <rect x="26" y="96" width="40" height="8" fill="#0b0e15" />
-            <rect x="34" y="88" width="30" height="8" fill="#141a2a" />
-          </svg>
-        </div>
-        <figcaption>
-          <strong>책 더미와 무릎담요</strong>
-          <span>오래 머무르는 자리</span>
-        </figcaption>
-      </figure>
-    </div>
-  </section>
-
-  <!-- 착석 — 원고 -->
-  <section id="room" class="phase" aria-label="자리">
-    <div id="room-backdrop" class="scene"></div>
-    <div class="manuscript-wrap">
-      <div id="manuscript" class="manuscript">
-        <p class="line-library">오늘 어떤 질문을 품고 오셨나요?</p>
+  <section id="modeScreen" class="mode-screen hidden">
+    <div class="veil"></div>
+    <div class="card">
+      <div class="eyebrow">ENTRANCE HALL</div>
+      <h2>오늘은 어떻게 들어오셨나요?</h2>
+      <p>공간을 천천히 둘러볼 수도 있고, 예약 문장을 들고 자리로 안내받을 수도 있습니다.</p>
+      <div class="btn-row">
+        <button class="btn" id="tourBtn">조용히 둘러보기</button>
+        <button class="btn primary" id="reserveBtn">예약하고 왔어요</button>
       </div>
-      <form id="write-form">
-        <textarea id="writing" rows="2" maxlength="1000" placeholder="이 자리에서, 적어 내려가세요." aria-label="적기"></textarea>
-        <div class="write-actions">
-          <button type="submit" class="quiet-button" id="write-btn">적어 놓습니다.</button>
-          <button type="button" class="ghost-button" id="rise-btn">자리에서 일어납니다.</button>
+    </div>
+  </section>
+
+  <section id="gateScreen" class="gate-screen hidden">
+    <div class="veil"></div>
+    <div class="card">
+      <div class="eyebrow">RESERVATION GATE</div>
+      <h2>예약하고 오셨나요?</h2>
+      <p>문 앞에서 받은 문장을 들려주세요.</p>
+      <input id="phraseInput" class="phrase-input" autocomplete="off" placeholder="입장 문장을 적어주세요" />
+      <div class="hint">프로토타입 문장: 따사로움은 눈부심이 부럽지 않습니다</div>
+      <div class="btn-row">
+        <button class="btn ghost" id="gateBack">돌아가기</button>
+        <button class="btn primary" id="enterReserved">문장 들려주기</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="hotspots" class="hotspots">
+    <button class="spot fire" data-seat="fire" data-label="벽난로 곁"></button>
+    <button class="spot desk" data-seat="desk" data-label="낡은 책상"></button>
+    <button class="spot chair" data-seat="chair" data-label="깊은 독서 의자"></button>
+  </div>
+
+  <section id="tourPanel" class="tour-panel hidden">
+    <div class="tour-copy">
+      <p>세 자리는 벽이 아니라 서로 다른 빛으로 나뉩니다. 마음이 머무는 곳을 눌러보세요.</p>
+      <button class="btn" id="tourExit">나가기</button>
+    </div>
+  </section>
+
+  <section id="seatPanel" class="seat-panel hidden">
+    <div class="dialog">
+      <div class="seat-head">
+        <div>
+          <h3 id="seatTitle">벽난로 곁</h3>
+          <div class="seat-sub" id="seatSub">감정을 가라앉히고 결정의 압박에서 잠시 떨어지는 자리</div>
         </div>
-      </form>
-      <p id="room-error" role="alert" hidden></p>
+        <div class="seat-actions">
+          <button class="rise-btn" id="riseSeat">자리에서 일어나기</button>
+          <button class="close" id="closeSeat" aria-label="나가기" title="나가기">×</button>
+        </div>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="composer">
+        <textarea id="answer" placeholder="한 문장이어도 괜찮습니다."></textarea>
+        <button id="send">↵</button>
+      </div>
     </div>
   </section>
 
-  <!-- 일어나기 -->
-  <section id="closing" class="phase" aria-label="마무리">
-    <div class="manuscript closing-paper">
-      <p class="closing-head">오늘 처음의 질문</p>
-      <p id="c-first" class="closing-body"></p>
-      <p class="closing-head">오늘 새롭게 발견한 질문</p>
-      <p id="c-found" class="closing-body"></p>
-      <p class="closing-head">오늘 당신이 남긴 문장</p>
-      <p id="c-sentence" class="closing-body"></p>
-      <p id="c-farewell" class="farewell"></p>
-      <p class="signature">— 만리서재</p>
-      <button id="leave" class="quiet-button">서재를 나섭니다.</button>
-    </div>
-  </section>
+  <div class="footer-note">MANRI LIBRARY</div>
+</div>
+<script>
+const room = document.getElementById('room');
+const doorScreen = document.getElementById('doorScreen');
+const modeScreen = document.getElementById('modeScreen');
+const gateScreen = document.getElementById('gateScreen');
+const hotspots = document.getElementById('hotspots');
+const tourPanel = document.getElementById('tourPanel');
+const seatPanel = document.getElementById('seatPanel');
+const status = document.getElementById('status');
+const phraseInput = document.getElementById('phraseInput');
+const msgBox = document.getElementById('messages');
+const answer = document.getElementById('answer');
+let currentSeat = 'fire';
+let reserved = false;
 
-  <script src="/app.js"></script>
+// 자리 — 표현의 온도만 다르다. 되비춤과 질문은 이 파일이 만들지 않는다.
+// key = 백엔드 좌석 키(functions/_lib/visit.ts SEATS). 화면의 fire/chair와 이름이 다르므로 매핑한다.
+// ※ 고정 질문 배열 없음. 질문은 전부 /api/ask (Genome Foundation → Conversation Layer)가 만든다.
+const seats = {
+  fire:{
+    key:'fireplace',
+    title:'벽난로 곁',
+    sub:'감정을 가라앉히고 결정의 압박에서 잠시 떨어지는 자리',
+    intro:'기다리고 있었습니다. 벽난로 곁으로 안내하겠습니다.',
+    invite:'무엇이든, 여기서부터 적어보세요.'
+  },
+  desk:{
+    key:'desk',
+    title:'낡은 책상',
+    sub:'엉킨 생각을 문장으로 꺼내고 질문의 구조를 살펴보는 자리',
+    intro:'책상 위 종이는 비어 있습니다. 엉킨 채로 꺼내도 됩니다.',
+    invite:'엉킨 채로 적어도 괜찮습니다.'
+  },
+  chair:{
+    key:'nook',
+    title:'깊은 독서 의자',
+    sub:'상실과 기억처럼 빠른 결론이 필요하지 않은 질문을 오래 품는 자리',
+    intro:'오래 걸려도 됩니다. 이 자리에서는 서두르지 않아도 됩니다.',
+    invite:'천천히, 떠오르는 대로 적어보세요.'
+  }
+};
+
+// 세션 상태 — 이력은 이 페이지 안에서만 산다(서버는 무상태).
+let uuid = null;
+let messages = [];
+let busy = false;
+const WAITING = ['책장을 한 장 넘기고 있습니다.','조용히 살펴보고 있습니다.','서가를 천천히 둘러보고 있습니다.'];
+
+function show(el){el.classList.remove('hidden')}
+function hide(el){el.classList.add('hidden')}
+function resetRoom(){
+  room.className='room entered';
+  status.textContent='MANRI LIBRARY · ONE ROOM';
+}
+function enterRoom(){
+  room.classList.add('entered');
+  hide(doorScreen);
+  setTimeout(()=>show(modeScreen),900);
+}
+document.getElementById('openDoor').onclick=enterRoom;
+document.getElementById('tourBtn').onclick=()=>{
+  reserved=false; hide(modeScreen); hotspots.classList.add('active'); show(tourPanel); status.textContent='FREE TOUR · NO SESSION';
+};
+document.getElementById('reserveBtn').onclick=()=>{hide(modeScreen);show(gateScreen);setTimeout(()=>phraseInput.focus(),300)};
+document.getElementById('gateBack').onclick=()=>{hide(gateScreen);show(modeScreen)};
+document.getElementById('enterReserved').onclick=()=>{
+  const v=phraseInput.value.trim().replace(/[.!?。]/g,'');
+  if(!v){phraseInput.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'none'}],{duration:260});return}
+  reserved=true;
+  hide(gateScreen);
+  status.textContent='RESERVATION CONFIRMED · FIREPLACE SEAT';
+  setTimeout(()=>openSeat('fire'),650);
+};
+document.getElementById('tourExit').onclick=()=>{
+  hide(tourPanel);hotspots.classList.remove('active');resetRoom();show(modeScreen);
+};
+document.querySelectorAll('.spot').forEach(btn=>btn.onclick=()=>openSeat(btn.dataset.seat));
+
+function openSeat(key){
+  currentSeat=key;
+  uuid=crypto.randomUUID();messages=[];busy=false;closed=false;
+  composerBox.hidden=false;
+  riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
+  room.className='room entered focus-'+key;
+  hotspots.classList.remove('active');hide(tourPanel);
+  const s=seats[key];
+  document.getElementById('seatTitle').textContent=s.title;
+  document.getElementById('seatSub').textContent=s.sub;
+  msgBox.innerHTML='';
+  show(seatPanel);
+  status.textContent='SEATED · '+s.title.toUpperCase();
+  setTimeout(()=>addGuide(reserved?s.intro:'이 자리는 '+s.sub+'입니다.'),700);
+  // 자리의 초대 — 질문이 아니다. 첫 질문부터 전부 엔진이 만든다.
+  setTimeout(()=>addGuide(s.invite),1450);
+}
+const composerBox = document.querySelector('.composer');
+const riseSeat = document.getElementById('riseSeat');
+let closed = false;
+function scrollToLatest(){
+  requestAnimationFrame(()=>{ msgBox.scrollTop = msgBox.scrollHeight; });
+}
+function addMsg(cls,text){const d=document.createElement('div');d.className='msg '+cls;d.textContent=text;msgBox.appendChild(d);scrollToLatest();return d}
+function addGuide(text){return addMsg('guide',text)}
+function addUser(text){return addMsg('user',text)}
+
+// 적은 말 → 관점 엔진. 이 함수는 질문을 만들지 않는다. 실패하면 오류를 보이고 멈춘다.
+async function send(){
+  if(busy||closed)return;
+  const text=answer.value.trim();if(!text)return;
+  busy=true;sendBtn.disabled=true;
+  const userBubble=addUser(text);answer.value='';
+  messages.push({role:'user',content:text});
+  const waiting=addMsg('sys',WAITING[Math.floor(Math.random()*WAITING.length)]);
+  try{
+    const res=await fetch('/api/ask',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({uuid,seat:seats[currentSeat].key,messages})
+    });
+    // 응답이 JSON이 아닐 수 있다(프록시/404 HTML 등). 날것의 파싱 오류를 사람에게 보이지 않는다.
+    let data=null;
+    try{ data=await res.json(); }catch{ data=null; }
+    if(!res.ok||!data)throw new Error((data&&data.error)||'서재와 연결되지 않았습니다. 잠시 후 다시 적어주세요.');
+    if(!data.reply)throw new Error(data.error||'말을 고르지 못했습니다. 다시 한번 적어주세요.');
+    messages.push({role:'assistant',content:data.reply});
+    waiting.remove();
+    String(data.reply).split(/\n{2,}/).filter(s=>s.trim())
+      .forEach(p=>addGuide(p.replace(/\n/g,' ').trim()));
+  }catch(err){
+    // 질문을 지어내지 않는다. 방금 적은 말은 이력·화면에서 함께 되돌리고,
+    // 적었던 문장은 입력칸으로 돌려준다(다시 치게 만들지 않는다).
+    waiting.remove();messages.pop();userBubble.remove();
+    if(!answer.value)answer.value=text;
+    addMsg('sys',err.message||'말을 고르지 못했습니다. 다시 적어주세요.');
+  }finally{
+    busy=false;sendBtn.disabled=false;answer.focus();
+  }
+}
+const sendBtn=document.getElementById('send');
+sendBtn.onclick=send;
+answer.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
+// 나가는 길 ①: 그냥 나가기(×) — 언제든 누를 수 있다(헤더는 스크롤되지 않는다).
+function leaveSeat(){
+  hide(seatPanel);resetRoom();
+  uuid=null;messages=[];busy=false;closed=false;
+  composerBox.hidden=false;
+  riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
+  if(reserved){show(modeScreen)}else{hotspots.classList.add('active');show(tourPanel)}
+}
+document.getElementById('closeSeat').onclick=leaveSeat;
+
+// 나가는 길 ②: 자리에서 일어나기 — 서재가 오늘 자리를 닫는 말을 건네고 나간다.
+// 닫는 말도 이 파일이 만들지 않는다. /api/close 가 만든다.
+riseSeat.onclick=async ()=>{
+  if(busy)return;
+  if(closed||messages.length===0)return leaveSeat();
+  busy=true;riseSeat.disabled=true;
+  const waiting=addMsg('sys','자리를 정리하고 있습니다.');
+  try{
+    const res=await fetch('/api/close',{
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({uuid,seat:seats[currentSeat].key,messages})
+    });
+    let data=null; try{ data=await res.json(); }catch{ data=null; }
+    if(!res.ok||!data)throw new Error((data&&data.error)||'마무리를 준비하지 못했습니다.');
+    const c=data.closing||{};
+    waiting.remove();
+    composerBox.hidden=true;closed=true;
+    [c.first_question,c.discovered_question,c.user_sentence,c.farewell]
+      .filter(Boolean).forEach(line=>addGuide(String(line)));
+    riseSeat.textContent='서재를 나서기';
+  }catch(err){
+    waiting.remove();
+    addMsg('sys',err.message||'마무리를 준비하지 못했습니다.');
+  }finally{
+    busy=false;riseSeat.disabled=false;
+  }
+};
+</script>
 </body>
 </html>

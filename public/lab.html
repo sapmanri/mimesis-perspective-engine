@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>만리서재 — 인터랙티브 공간 프로토타입 (LAB)</title>
+<title>만리서재 — LAB</title>
 <meta name="robots" content="noindex" />
 <style>
   :root{
@@ -93,23 +93,31 @@
     padding:16px 20px;border-radius:20px;background:var(--glass);backdrop-filter:blur(14px);border:1px solid var(--line)}
   .tour-copy p{margin:0;font-size:14px;color:#e8dfd4}
   .seat-panel{place-items:end center;padding-bottom:22px}
+  /* 헤더(나가는 길)와 입력칸은 고정, 대화만 스크롤된다.
+     예전엔 .dialog 전체가 스크롤돼서 대화가 길어지면 나가기 버튼이 위로 사라졌다. */
   .dialog{
-    width:min(760px,94vw);max-height:min(76vh,690px);overflow:auto;border:1px solid var(--line);
+    width:min(760px,94vw);height:min(76vh,690px);display:flex;flex-direction:column;overflow:hidden;
+    border:1px solid var(--line);
     border-radius:26px;background:rgba(25,20,16,.80);backdrop-filter:blur(18px);box-shadow:0 22px 90px rgba(0,0,0,.55);
     padding:24px;
   }
-  .seat-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:18px}
+  .seat-head{flex:none;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:18px}
+  .seat-actions{display:flex;align-items:center;gap:8px;flex:none}
+  .rise-btn{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--paper);
+    padding:9px 14px;border-radius:999px;font-size:13px;white-space:nowrap;transition:.25s ease}
+  .rise-btn:hover{background:rgba(255,255,255,.13)}
+  .rise-btn:disabled{opacity:.45;cursor:default}
   .seat-head h3{margin:0;font-family:Georgia,serif;font-size:26px;font-weight:400}
   .seat-sub{font-size:12px;color:#bda996;margin-top:6px}
   .close{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.04);color:white}
-  .messages{padding:18px 2px 4px;display:flex;flex-direction:column;gap:14px}
+  .messages{flex:1;min-height:0;overflow-y:auto;padding:18px 2px 4px;display:flex;flex-direction:column;gap:14px}
   .msg{max-width:82%;padding:13px 16px;border-radius:18px;line-height:1.65;font-size:15px;animation:rise .45s ease both}
   .msg.guide{align-self:flex-start;background:rgba(244,238,228,.09);border:1px solid rgba(255,255,255,.08)}
   .msg.user{align-self:flex-end;background:#eee5d8;color:#29231e}
   .msg.sys{align-self:flex-start;max-width:100%;background:none;border:none;padding:2px 4px;
     font-size:13px;color:#bda996;font-style:italic}
   @keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-  .composer{display:flex;gap:10px;margin-top:14px}
+  .composer{flex:none;display:flex;gap:10px;margin-top:14px}
   .composer textarea{flex:1;resize:none;min-height:54px;max-height:130px;border-radius:17px;border:1px solid var(--line);
     background:rgba(0,0,0,.22);color:#fff;padding:15px;outline:none;line-height:1.5}
   .composer button{width:54px;border:none;border-radius:17px;background:#eee5d8;color:#29231e;font-weight:700}
@@ -192,7 +200,10 @@
           <h3 id="seatTitle">벽난로 곁</h3>
           <div class="seat-sub" id="seatSub">감정을 가라앉히고 결정의 압박에서 잠시 떨어지는 자리</div>
         </div>
-        <button class="close" id="closeSeat">×</button>
+        <div class="seat-actions">
+          <button class="rise-btn" id="riseSeat">자리에서 일어나기</button>
+          <button class="close" id="closeSeat" aria-label="나가기" title="나가기">×</button>
+        </div>
       </div>
       <div class="messages" id="messages"></div>
       <div class="composer">
@@ -202,7 +213,7 @@
     </div>
   </section>
 
-  <div class="footer-note">MANRI LIBRARY · LAB — 실험용 화면</div>
+  <div class="footer-note">MANRI LIBRARY · LAB</div>
 </div>
 <script>
 const room = document.getElementById('room');
@@ -284,7 +295,9 @@ document.querySelectorAll('.spot').forEach(btn=>btn.onclick=()=>openSeat(btn.dat
 
 function openSeat(key){
   currentSeat=key;
-  uuid=crypto.randomUUID();messages=[];busy=false;
+  uuid=crypto.randomUUID();messages=[];busy=false;closed=false;
+  composerBox.hidden=false;
+  riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   room.className='room entered focus-'+key;
   hotspots.classList.remove('active');hide(tourPanel);
   const s=seats[key];
@@ -297,16 +310,22 @@ function openSeat(key){
   // 자리의 초대 — 질문이 아니다. 첫 질문부터 전부 엔진이 만든다.
   setTimeout(()=>addGuide(s.invite),1450);
 }
-function addMsg(cls,text){const d=document.createElement('div');d.className='msg '+cls;d.textContent=text;msgBox.appendChild(d);msgBox.scrollTop=msgBox.scrollHeight;return d}
+const composerBox = document.querySelector('.composer');
+const riseSeat = document.getElementById('riseSeat');
+let closed = false;
+function scrollToLatest(){
+  requestAnimationFrame(()=>{ msgBox.scrollTop = msgBox.scrollHeight; });
+}
+function addMsg(cls,text){const d=document.createElement('div');d.className='msg '+cls;d.textContent=text;msgBox.appendChild(d);scrollToLatest();return d}
 function addGuide(text){return addMsg('guide',text)}
 function addUser(text){return addMsg('user',text)}
 
 // 적은 말 → 관점 엔진. 이 함수는 질문을 만들지 않는다. 실패하면 오류를 보이고 멈춘다.
 async function send(){
-  if(busy)return;
+  if(busy||closed)return;
   const text=answer.value.trim();if(!text)return;
   busy=true;sendBtn.disabled=true;
-  addUser(text);answer.value='';
+  const userBubble=addUser(text);answer.value='';
   messages.push({role:'user',content:text});
   const waiting=addMsg('sys',WAITING[Math.floor(Math.random()*WAITING.length)]);
   try{
@@ -325,8 +344,10 @@ async function send(){
     String(data.reply).split(/\n{2,}/).filter(s=>s.trim())
       .forEach(p=>addGuide(p.replace(/\n/g,' ').trim()));
   }catch(err){
-    // 질문을 지어내지 않는다. 방금 적은 말은 이력에서 되돌린다.
-    waiting.remove();messages.pop();
+    // 질문을 지어내지 않는다. 방금 적은 말은 이력·화면에서 함께 되돌리고,
+    // 적었던 문장은 입력칸으로 돌려준다(다시 치게 만들지 않는다).
+    waiting.remove();messages.pop();userBubble.remove();
+    if(!answer.value)answer.value=text;
     addMsg('sys',err.message||'말을 고르지 못했습니다. 다시 적어주세요.');
   }finally{
     busy=false;sendBtn.disabled=false;answer.focus();
@@ -335,9 +356,42 @@ async function send(){
 const sendBtn=document.getElementById('send');
 sendBtn.onclick=send;
 answer.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
-document.getElementById('closeSeat').onclick=()=>{
+// 나가는 길 ①: 그냥 나가기(×) — 언제든 누를 수 있다(헤더는 스크롤되지 않는다).
+function leaveSeat(){
   hide(seatPanel);resetRoom();
+  uuid=null;messages=[];busy=false;closed=false;
+  composerBox.hidden=false;
+  riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   if(reserved){show(modeScreen)}else{hotspots.classList.add('active');show(tourPanel)}
+}
+document.getElementById('closeSeat').onclick=leaveSeat;
+
+// 나가는 길 ②: 자리에서 일어나기 — 서재가 오늘 자리를 닫는 말을 건네고 나간다.
+// 닫는 말도 이 파일이 만들지 않는다. /api/close 가 만든다.
+riseSeat.onclick=async ()=>{
+  if(busy)return;
+  if(closed||messages.length===0)return leaveSeat();
+  busy=true;riseSeat.disabled=true;
+  const waiting=addMsg('sys','자리를 정리하고 있습니다.');
+  try{
+    const res=await fetch('/api/close',{
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({uuid,seat:seats[currentSeat].key,messages})
+    });
+    let data=null; try{ data=await res.json(); }catch{ data=null; }
+    if(!res.ok||!data)throw new Error((data&&data.error)||'마무리를 준비하지 못했습니다.');
+    const c=data.closing||{};
+    waiting.remove();
+    composerBox.hidden=true;closed=true;
+    [c.first_question,c.discovered_question,c.user_sentence,c.farewell]
+      .filter(Boolean).forEach(line=>addGuide(String(line)));
+    riseSeat.textContent='서재를 나서기';
+  }catch(err){
+    waiting.remove();
+    addMsg('sys',err.message||'마무리를 준비하지 못했습니다.');
+  }finally{
+    busy=false;riseSeat.disabled=false;
+  }
 };
 </script>
 </body>

@@ -3,7 +3,9 @@ import { SYSTEM_PROMPT } from "../_lib/prompt";
 import { json, rateLimitKey, type Env } from "../_lib/common";
 import { SEATS, validateConversation, saveVisit, type Turn } from "../_lib/visit";
 
-const RATE_LIMIT_PER_MINUTE = 10;
+// 한 턴 = 한 요청이다. 10이면 정상 대화가 열 턴에서 막힌다(실사용 확인 2026-07-20).
+// 서재의 속도를 지키면서도 대화를 끊지 않는 선으로 올린다. 남용 차단 목적은 유지.
+const RATE_LIMIT_PER_MINUTE = 30;
 
 // 대화 턴: 전체 이력을 받아 다음 되비춤+질문 하나를 돌려준다. 서버는 무상태(이력은 클라이언트).
 export const onRequestPost: PagesFunction<Env> = async (ctx) => {
