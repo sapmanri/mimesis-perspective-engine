@@ -207,7 +207,7 @@
       </div>
       <div class="messages" id="messages"></div>
       <div class="composer">
-        <textarea id="answer" placeholder="한 문장이어도 괜찮습니다."></textarea>
+        <textarea id="answer" placeholder="오래 붙들고 있었지만 어디서부터 풀어야 할지 모르는 질문이 있나요?"></textarea>
         <button id="send">↵</button>
       </div>
     </div>
@@ -340,7 +340,7 @@ function openSeat(key,issuedUuid){
   footerNote.hidden=true;
   currentSeat=key;
   uuid=issuedUuid;messages=[];busy=false;closed=false;riseFailed=false;
-  composerBox.hidden=false;answer.placeholder='한 문장이어도 괜찮습니다.';
+  composerBox.hidden=false;answer.placeholder='오래 붙들고 있었지만 어디서부터 풀어야 할지 모르는 질문이 있나요?';
   riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   room.className='room entered focus-'+key;
   hotspots.classList.remove('active');hide(tourPanel);

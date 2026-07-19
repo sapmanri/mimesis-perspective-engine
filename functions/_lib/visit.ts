@@ -52,8 +52,9 @@ export function buildOutcome(messages: Turn[], userEnded: boolean): Outcome {
 // 한 턴의 '왜' — 어떤 이동 문법을 왜 골랐는가. 결과만 남기면 게놈을 고칠 수 없다.
 export interface MovementLog {
   turn: number;
-  movement: string; // 이동 문법 코드 (question-transition.md의 T0~T10)
-  reason: string;
+  movement: string;   // 이동 코드 (question-transition.md의 T0~T10)
+  name: string;       // 사람이 읽는 이름
+  triggers: string[]; // 관찰 신호 — 산문이 아니라 코드. 이래야 세어볼 수 있다.
   at: string;
 }
 
