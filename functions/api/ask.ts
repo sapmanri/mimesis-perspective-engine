@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT } from "../_lib/prompt";
 import { json, rateLimitKey, type Env } from "../_lib/common";
 import { SEATS, validateConversation, saveVisit, type Turn } from "../_lib/visit";
-import { NOT_RESERVED_MESSAGE, passValid } from "../_lib/pass";
+import { NOT_RESERVED_MESSAGE, readTicket } from "../_lib/pass";
 
 // 한 턴 = 한 요청이다. 10이면 정상 대화가 열 턴에서 막힌다(실사용 확인 2026-07-20).
 // 서재의 속도를 지키면서도 대화를 끊지 않는 선으로 올린다. 남용 차단 목적은 유지.
@@ -33,7 +33,8 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   }
   // 예약 티켓 확인 — /api/enter에서 문장을 통과한 세션만 대화할 수 있다.
   // (프런트 게이트만으로는 이 엔드포인트가 그대로 열려 있다.)
-  if (!(await passValid(env, uuid, seat))) {
+  const ticket = await readTicket(env, uuid);
+  if (!ticket || ticket.seat !== seat) {
     return json({ error: NOT_RESERVED_MESSAGE }, 403);
   }
   const invalid = validateConversation(messages);
@@ -80,7 +81,11 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
     .trim();
   if (!reply) return json({ error: "말을 고르지 못했습니다. 다시 한번 적어주세요." }, 502);
 
-  ctx.waitUntil(saveVisit(env, uuid, seat, [...messages, { role: "assistant", content: reply }], null));
+  ctx.waitUntil(
+    saveVisit(env, uuid, seat, [...messages, { role: "assistant", content: reply }], null, {
+      ticket,
+    }),
+  );
 
   return json({ reply });
 };

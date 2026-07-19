@@ -8,6 +8,9 @@ export interface Env {
   PROMPT_VERSION: string;
   // 입장 문장(예약 확인). 미설정 시 _lib/pass.ts의 기본값을 쓴다.
   ENTRY_PHRASE?: string;
+  // 티켓에 함께 찍히는 판본 (게놈이 올라가도 예전 예약을 다시 읽기 위해)
+  CONVERSATION_VERSION?: string;
+  VISUAL_VERSION?: string;
 }
 
 export const json = (data: unknown, status = 200): Response =>

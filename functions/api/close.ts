@@ -1,8 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT } from "../_lib/prompt";
 import { json, rateLimitKey, type Env } from "../_lib/common";
-import { SEATS, validateConversation, saveVisit, type Turn } from "../_lib/visit";
-import { NOT_RESERVED_MESSAGE, passValid } from "../_lib/pass";
+import { SEATS, validateConversation, saveVisit, buildOutcome, type Turn } from "../_lib/visit";
+import { NOT_RESERVED_MESSAGE, readTicket } from "../_lib/pass";
 
 // 자리에서 일어나기 — 결론이 아니라 사용자의 변화를 정리해 돌려준다.
 const CLOSING_SCHEMA = {
@@ -35,7 +35,8 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   if (!/^[0-9a-f-]{36}$/.test(uuid) || !SEATS[seat]) {
     return json({ error: "잘못된 요청입니다." }, 400);
   }
-  if (!(await passValid(env, uuid, seat))) {
+  const ticket = await readTicket(env, uuid);
+  if (!ticket || ticket.seat !== seat) {
     return json({ error: NOT_RESERVED_MESSAGE }, 403);
   }
   const invalid = validateConversation(messages);
@@ -85,7 +86,13 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
     return json({ error: "마무리를 준비하지 못했습니다." }, 502);
   }
 
-  ctx.waitUntil(saveVisit(env, uuid, seat, messages, closing));
+  // 종료 로그 — AI가 판정하지 않는다. 대화에서 그대로 꺼낸 세 가지뿐.
+  ctx.waitUntil(
+    saveVisit(env, uuid, seat, messages, closing, {
+      ticket,
+      outcome: buildOutcome(messages, true),
+    }),
+  );
 
   return json({ closing });
 };

@@ -1,6 +1,7 @@
 import { json, rateLimitKey, type Env } from "../_lib/common";
 import {
   NOT_RESERVED_MESSAGE,
+  buildTicket,
   issuePass,
   phraseAccepted,
   randomSeat,
@@ -45,7 +46,9 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   // 예약 확인됨. 자리는 서재가 정한다(현재는 무작위 배정 — 예약 시스템 연결 전까지).
   const uuid = crypto.randomUUID();
   const seat = randomSeat();
-  await issuePass(env, uuid, seat);
+  // 티켓에 '그때의 서재'를 통째로 찍는다 — 판본이 올라가도 이 예약을 다시 읽을 수 있게.
+  const ticket = buildTicket(env, seat, phrase.trim());
+  await issuePass(env, uuid, ticket);
 
   return json({ uuid, seat, seatContext: SEATS[seat] });
 };
