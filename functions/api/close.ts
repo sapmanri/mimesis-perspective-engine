@@ -37,9 +37,12 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   const invalid = validateConversation(messages);
   if (invalid && messages.length <= 60) return json({ error: invalid }, 400);
 
-  const rlKey = await rateLimitKey(request);
+  // 나가는 길은 대화량에 막히면 안 된다. 예전엔 /api/ask와 같은 카운터를 써서,
+  // 열 턴 넘게 이야기하면 '자리에서 일어나기'만 429로 막혔다 (실사용 확인 2026-07-20).
+  // 일어나기는 세션당 한 번이므로 자기 카운터를 따로 둔다.
+  const rlKey = (await rateLimitKey(request)) + ":close";
   const count = Number((await env.PENDING.get(rlKey)) ?? "0");
-  if (count >= 10) return json({ error: "잠시 후에 다시 시도해 주세요." }, 429);
+  if (count >= 6) return json({ error: "잠시 후에 다시 시도해 주세요." }, 429);
   await env.PENDING.put(rlKey, String(count + 1), { expirationTtl: 60 });
 
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 1 });

@@ -295,7 +295,7 @@ document.querySelectorAll('.spot').forEach(btn=>btn.onclick=()=>openSeat(btn.dat
 
 function openSeat(key){
   currentSeat=key;
-  uuid=crypto.randomUUID();messages=[];busy=false;closed=false;
+  uuid=crypto.randomUUID();messages=[];busy=false;closed=false;riseFailed=false;
   composerBox.hidden=false;
   riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   room.className='room entered focus-'+key;
@@ -313,6 +313,7 @@ function openSeat(key){
 const composerBox = document.querySelector('.composer');
 const riseSeat = document.getElementById('riseSeat');
 let closed = false;
+let riseFailed = false;
 function scrollToLatest(){
   requestAnimationFrame(()=>{ msgBox.scrollTop = msgBox.scrollHeight; });
 }
@@ -359,7 +360,7 @@ answer.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.prevent
 // 나가는 길 ①: 그냥 나가기(×) — 언제든 누를 수 있다(헤더는 스크롤되지 않는다).
 function leaveSeat(){
   hide(seatPanel);resetRoom();
-  uuid=null;messages=[];busy=false;closed=false;
+  uuid=null;messages=[];busy=false;closed=false;riseFailed=false;
   composerBox.hidden=false;
   riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   if(reserved){show(modeScreen)}else{hotspots.classList.add('active');show(tourPanel)}
@@ -370,7 +371,8 @@ document.getElementById('closeSeat').onclick=leaveSeat;
 // 닫는 말도 이 파일이 만들지 않는다. /api/close 가 만든다.
 riseSeat.onclick=async ()=>{
   if(busy)return;
-  if(closed||messages.length===0)return leaveSeat();
+  // 닫는 말을 못 받았더라도 나가는 길은 늘 열려 있어야 한다.
+  if(closed||riseFailed||messages.length===0)return leaveSeat();
   busy=true;riseSeat.disabled=true;
   const waiting=addMsg('sys','자리를 정리하고 있습니다.');
   try{
@@ -387,8 +389,10 @@ riseSeat.onclick=async ()=>{
       .filter(Boolean).forEach(line=>addGuide(String(line)));
     riseSeat.textContent='서재를 나서기';
   }catch(err){
-    waiting.remove();
-    addMsg('sys',err.message||'마무리를 준비하지 못했습니다.');
+    // 막다른 길을 만들지 않는다: 같은 버튼을 다시 누르면 그냥 나가게 바꾼다.
+    waiting.remove();riseFailed=true;
+    riseSeat.textContent='그냥 나가기';
+    addMsg('sys',(err.message||'마무리를 준비하지 못했습니다.')+' 한 번 더 누르시면 그냥 나가실 수 있습니다.');
   }finally{
     busy=false;riseSeat.disabled=false;
   }
