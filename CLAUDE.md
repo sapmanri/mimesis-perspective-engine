@@ -7,7 +7,7 @@
 - **Claude**: 개발자 · 초안 작성 — 초안을 만들고 판정을 받는다. 판정 없이 확정하지 않는다.
 
 ## 헌법 (읽기 순서 — 이 문서들과 충돌하는 코드·문서는 쓸 수 없다)
-1. `docs/MIMESIS_CONSTITUTION.md` — **최상위 헌법, 확정** (만리서재·별·미래 서비스 전부) — 제0조 안전, 제1~5조. 개정은 불변이 아니라 엄격한 절차(근거·영향·충돌 검증·승인 기록)
+1. `docs/MIMESIS_CONSTITUTION.md` — **최상위 헌법, 확정** (만리서재·별·미래 서비스 전부) — 제0조 안전, 제1~6조 (제6조=Genesis Principle: 방은 창작되지 않고 발견된다 — 이미지는 "생성"이 아니라 **"촬영"**). 개정은 불변이 아니라 엄격한 절차(근거·영향·충돌 검증·승인 기록)
 2. `docs/MANRI_LIBRARY_MANIFESTO.md` — 사용자 선언문 v1.1 **확정** (문을 연 사람이 처음 만나는 헌법)
 3. `docs/MIMESIS_OBSERVATION_ARCHITECTURE.md` — 공개 문서 (30초 설명)
 4. `docs/SAPMANRI_GENOME_SPEC_V1.md` — **Genome Edition 1, 확정·영구 불변** (형질 문장 수정 절대 금지 — 새 형질은 설계자 판정으로만 뒤 번호 추가)
@@ -43,8 +43,8 @@
 - GitHub Pages(문서 열람용)는 main/root Jekyll — 문서에 `{{` `{%` 넣지 말 것.
 - 명령 체인 `&&`만, 게이트는 `> log 2>&1; RC=$?`로 exit 직접 검사, 검증기는 음성 테스트 필수.
 
-## 현재 상태 (2026-07-20 — 생성 승인·최종 문답 대기)
-**생성 승인 완료. 문서 다듬기 종료.** 남은 것 하나: 생성 전 최종 문답 5건의 Vase 판정 — ① SPACE 누락 오브젝트 2종(장작 바구니·사다리) ② 북벽 낮 어휘(`soft diffuse north light`) 저녁 충돌 ③ 광원 봉인(책상 램프 unlit·초 생략) ④ 창밖=비확정 요소 각주 ⑤ 들보 스팬(보고만). 상세·패치안은 vault `HANDOFF_MANRI_20260720.md`. 판정 후: 패치 반영→재조립→Vase 외부 도구 생성→Acceptance Rule 순서(공간→빛→카메라→재질→마지막에 분위기, 관문 3질문 후에야 "예쁜가") 전수 대조. 통과 전 다른 컷 생성 금지.
+## 현재 상태 (2026-07-20 — 최종 문답 판정 완료, **촬영 대기**)
+최종 문답 5건 Vase 판정 완료: ①~④ 승인·반영(SPACE에 장작 바구니·오크 사다리 추가 / 북벽 낮 어휘→`old wavy glass`(시간 중립), 저녁 컷은 `its old wavy glass holding the last blue-grey dusk` / 광원 봉인: 벽난로·플로어 스탠드·북창 잔광 셋뿐, 책상 램프 unlit·`no candles` — 책상 램프는 B석 착석 시 점등(lighting-and-camera.md 점등의 이야기 규칙) / 창밖=의도적 비확정: `Exterior view is intentionally undefined. Nothing outside the windows in this image becomes canonical.` — 창밖은 image reference로도 상속 금지, 창밖 대장은 첫 낮 컷 전 판정), ⑤ 들보 **보류**(공간 기억 > 건축 도면 — spatial-layout.md 주석). **헌법 제6조 신설(Genesis Principle, 4요건 개정 절차 이행)**: 방은 창작되지 않고 발견된다 — 어휘 전환 "생성"→**"촬영"**. 최종 프롬프트 재조립 완료(`docs/manri-visual-bible/prompts/ENTRANCE_REFERENCE_CUT_SPEC.md` 2절 그대로 복사해 사용). 남은 것: **Vase 외부 도구로 촬영**(3:2, seed·도구 기록) → Acceptance Rule 순서(공간→빛→카메라→재질→마지막에 분위기, 관문 3질문 후에야 "예쁜가") 전수 대조. 통과 전 다른 컷 촬영 금지. 미세 이월: 맨틀 초 1자루 일반 존치 여부(좌석 컷 전 재판정).
 
 ## 직전 이력 (2026-07-19 밤 — 2차 판정 반영·재검증 완료)
 1차 검수(★5·★5·★4·★4) → 2차 판정 4건 전부 반영: ① silence 반응("불 일렁") 삭제 — 공간은 독립 물리 시간만 따름(허용/금지 목록: motion-and-sound 1절) ② Expression v2.1 — 예약 의식이 흐름 앞단에, 예약 문장은 Foundation 비입력 ③ '엔진' 보호 용어화 ④ KPI 재설계 — 행동 지표/관점 이동 지표 분리, 핵심 질문 "사용자의 말 속에서 처음 질문과 다른 자리가 새로 나타났는가", 자동 판정은 내부 검토용만(결제·등급·평가 연결 금지).

@@ -53,6 +53,17 @@
 
 ## 5. 시간·날씨의 창밖 색
 
+**창밖 풍경은 의도적으로 비확정이다** (Vase 판정 2026-07-20):
+
+```text
+Exterior view is intentionally undefined.
+Nothing outside the windows in this image becomes canonical.
+```
+
+아래 표는 유리에 맺히는 **색과 밝기의 지침일 뿐**, 창밖에 무엇이 있는지(산·호수·숲·
+거리)는 어떤 문서도 정하지 않았다. 촬영된 컷의 창밖에 우연히 그려진 풍경은 캐논이
+아니며, image reference로도 상속하지 않는다. **창밖 대장은 첫 낮 컷 전에 판정한다.**
+
 | 상태 | 창밖 | 실내 보정 |
 |---|---|---|
 | 새벽 | `#6E7B8B` | 실내 전체 -1.5스톱, 벽난로 잔불만 |
