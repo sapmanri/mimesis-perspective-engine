@@ -262,6 +262,14 @@ let uuid = null;
 let messages = [];
 let busy = false;
 const WAITING = ['책장을 한 장 넘기고 있습니다.','조용히 살펴보고 있습니다.','서가를 천천히 둘러보고 있습니다.'];
+// 브라우저 원문 오류(Failed to fetch 등)를 사람에게 그대로 보이지 않는다.
+function humanError(err,fallback){
+  const m=err&&err.message?String(err.message):'';
+  if(!m||err instanceof TypeError||/fetch|network|load failed/i.test(m)){
+    return '서재와 연결되지 않았습니다. 잠시 후 다시 적어주세요.';
+  }
+  return m||fallback;
+}
 
 function show(el){el.classList.remove('hidden')}
 function hide(el){el.classList.add('hidden')}
@@ -300,7 +308,7 @@ function openSeat(key){
   footerNote.hidden=true;
   currentSeat=key;
   uuid=crypto.randomUUID();messages=[];busy=false;closed=false;riseFailed=false;
-  composerBox.hidden=false;
+  composerBox.hidden=false;answer.placeholder='한 문장이어도 괜찮습니다.';
   riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   room.className='room entered focus-'+key;
   hotspots.classList.remove('active');hide(tourPanel);
@@ -331,6 +339,8 @@ async function send(){
   if(busy||closed)return;
   const text=answer.value.trim();if(!text)return;
   busy=true;sendBtn.disabled=true;
+  // 처음 한 번만 필요한 안내다. 대화가 시작되면 입력칸을 비워 둔다.
+  answer.placeholder='';
   const userBubble=addUser(text);answer.value='';
   messages.push({role:'user',content:text});
   const waiting=addMsg('sys',WAITING[Math.floor(Math.random()*WAITING.length)]);
@@ -354,7 +364,7 @@ async function send(){
     // 적었던 문장은 입력칸으로 돌려준다(다시 치게 만들지 않는다).
     waiting.remove();messages.pop();userBubble.remove();
     if(!answer.value)answer.value=text;
-    addMsg('sys',err.message||'말을 고르지 못했습니다. 다시 적어주세요.');
+    addMsg('sys',humanError(err,'말을 고르지 못했습니다. 다시 적어주세요.'));
   }finally{
     busy=false;sendBtn.disabled=false;answer.focus();
   }
@@ -398,7 +408,7 @@ riseSeat.onclick=async ()=>{
     // 막다른 길을 만들지 않는다: 같은 버튼을 다시 누르면 그냥 나가게 바꾼다.
     waiting.remove();riseFailed=true;
     riseSeat.textContent='그냥 나가기';
-    addMsg('sys',(err.message||'마무리를 준비하지 못했습니다.')+' 한 번 더 누르시면 그냥 나가실 수 있습니다.');
+    addMsg('sys',humanError(err,'마무리를 준비하지 못했습니다.')+' 한 번 더 누르시면 그냥 나가실 수 있습니다.');
   }finally{
     busy=false;riseSeat.disabled=false;
   }
