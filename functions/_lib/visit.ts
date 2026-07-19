@@ -54,8 +54,32 @@ export interface MovementLog {
   turn: number;
   movement: string;   // 이동 코드 (question-transition.md의 T0~T10)
   name: string;       // 사람이 읽는 이름
-  triggers: string[]; // 관찰 신호 — 산문이 아니라 코드. 이래야 세어볼 수 있다.
+  triggers: string[]; // 이동을 고른 근거 — 산문이 아니라 코드. 이래야 세어볼 수 있다.
   at: string;
+  // 이 이동 뒤에 사용자의 말에서 관찰된 변화. 서버가 시간순으로 이어 붙인다.
+  // success 같은 결론은 저장하지 않는다 — 효과는 나중에 운영 분석에서 센다.
+  subsequent_signals?: string[];
+  observed_at_turn?: number;
+}
+
+// 이번 턴에 관찰된 신호를 '직전 이동'에 되돌려 붙인다.
+// 지금 사용자가 보인 변화는 직전 턴의 이동이 만든 것이기 때문이다.
+export function linkMovements(
+  prior: MovementLog[],
+  entry: MovementLog | null,
+  signals: string[],
+): MovementLog[] {
+  const log = [...prior];
+  if (signals.length) {
+    for (let i = log.length - 1; i >= 0; i -= 1) {
+      if (!log[i].subsequent_signals) {
+        log[i] = { ...log[i], subsequent_signals: signals, observed_at_turn: entry?.turn ?? log[i].turn + 1 };
+        break;
+      }
+    }
+  }
+  if (entry) log.push(entry);
+  return log;
 }
 
 // 방문 기록 — 서재의 호흡. 실패는 조용히 삼킨다.
@@ -68,11 +92,27 @@ export async function saveVisit(
   extra?: {
     ticket?: unknown | null;
     outcome?: Outcome | null;
-    movements?: MovementLog[] | null;
+    movement?: MovementLog | null; // 이번 턴에 고른 이동
+    signals?: string[];            // 이번 턴 사용자의 말에서 관찰된 변화
   },
 ): Promise<void> {
   try {
     const now = new Date().toISOString();
+    // 이동 기록은 누적된다 — 앞선 이동에 이번 신호를 이어 붙인 뒤 새 이동을 덧붙인다.
+    let movementsJson: string | null = null;
+    if (extra?.movement || extra?.signals?.length) {
+      let prior: MovementLog[] = [];
+      try {
+        const row = await env.DB.prepare("SELECT movements_json FROM visits WHERE uuid = ?")
+          .bind(uuid)
+          .first<{ movements_json: string | null }>();
+        if (row?.movements_json) prior = JSON.parse(row.movements_json) as MovementLog[];
+      } catch {
+        prior = [];
+      }
+      const linked = linkMovements(prior, extra.movement ?? null, extra.signals ?? []);
+      if (linked.length) movementsJson = JSON.stringify(linked);
+    }
     await env.DB.prepare(
       `INSERT INTO visits
          (uuid, seat, conversation_json, closing_json, turn_count, created_at, updated_at,
@@ -101,7 +141,7 @@ export async function saveVisit(
         env.PROMPT_VERSION,
         extra?.ticket ? JSON.stringify(extra.ticket) : null,
         extra?.outcome ? JSON.stringify(extra.outcome) : null,
-        extra?.movements?.length ? JSON.stringify(extra.movements) : null,
+        movementsJson,
       )
       .run();
   } catch {

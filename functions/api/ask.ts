@@ -3,7 +3,7 @@ import { SYSTEM_PROMPT } from "../_lib/prompt";
 import { json, rateLimitKey, type Env } from "../_lib/common";
 import { SEATS, validateConversation, saveVisit, type Turn, type MovementLog } from "../_lib/visit";
 import { NOT_RESERVED_MESSAGE, readTicket } from "../_lib/pass";
-import { MOVEMENT_CODES, TRIGGER_IDS } from "../_lib/movements";
+import { MOVEMENT_CODES, TRIGGER_IDS, SIGNAL_IDS } from "../_lib/movements";
 
 // reply(사용자에게)와 movement(내부 기록)를 분리해 받는다.
 // 코드·신호 목록은 Conversation Bible에서 생성된 movements.ts가 정본이다 — 여기서 다시 적지 않는다.
@@ -29,8 +29,16 @@ const MOVEMENT_SCHEMA = {
       required: ["code", "name", "triggers"],
       additionalProperties: false,
     },
+    signals: {
+      type: "array",
+      // 직전 이동이 만든 변화를 사용자의 방금 말에서만 관찰한다.
+      // 성공 판정이 아니다 — 없으면 빈 배열. 억지로 찾지 않는다.
+      items: { type: "string", enum: [...SIGNAL_IDS] },
+      description:
+        "사용자가 방금 한 말에서 관찰된 변화 신호. 없으면 빈 배열. 성공 여부는 판정하지 않는다.",
+    },
   },
-  required: ["reply", "movement"],
+  required: ["reply", "movement", "signals"],
   additionalProperties: false,
 } as const;
 
@@ -122,34 +130,36 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   // 구조화 출력: { reply, movement:{code,name,triggers} }
   let reply = "";
   let movement: { code?: string; name?: string; triggers?: string[] } | null = null;
+  let signals: string[] = [];
   try {
     const parsed = JSON.parse(raw) as {
       reply?: string;
       movement?: { code?: string; name?: string; triggers?: string[] };
+      signals?: string[];
     };
     reply = (parsed.reply ?? "").trim();
     movement = parsed.movement ?? null;
+    signals = Array.isArray(parsed.signals) ? parsed.signals : [];
   } catch {
     reply = raw; // 스키마가 깨져도 대화는 계속된다 — 이동만 기록되지 않는다.
   }
   if (!reply) return json({ error: "말을 고르지 못했습니다. 다시 한번 적어주세요." }, 502);
 
-  const movements: MovementLog[] = movement?.code
-    ? [
-        {
-          turn: messages.length,
-          movement: movement.code,
-          name: movement.name ?? "",
-          triggers: Array.isArray(movement.triggers) ? movement.triggers.slice(0, 3) : [],
-          at: new Date().toISOString(),
-        },
-      ]
-    : [];
+  const entry: MovementLog | null = movement?.code
+    ? {
+        turn: messages.length,
+        movement: movement.code,
+        name: movement.name ?? "",
+        triggers: Array.isArray(movement.triggers) ? movement.triggers.slice(0, 3) : [],
+        at: new Date().toISOString(),
+      }
+    : null;
 
   ctx.waitUntil(
     saveVisit(env, uuid, seat, [...messages, { role: "assistant", content: reply }], null, {
       ticket,
-      movements,
+      movement: entry,
+      signals,
     }),
   );
 

@@ -28,6 +28,7 @@ function readTable(md, heading) {
   if (start < 0) fail(`${BIBLE} 에서 '${heading}' 절을 찾지 못함`);
   const body = md.slice(start + heading.length);
   const rows = [];
+  let seenHeader = false;
   for (const line of body.split("\n")) {
     const t = line.trim();
     if (t.startsWith("###") || t.startsWith("## ")) break; // 다음 절에서 멈춤
@@ -35,7 +36,7 @@ function readTable(md, heading) {
     const cells = t.split("|").slice(1, -1).map((c) => c.trim());
     if (cells.length < 2) continue;
     if (/^-+$/.test(cells[0].replace(/[: ]/g, ""))) continue; // 구분선
-    if (cells[0] === "code" || cells[0] === "trigger") continue; // 헤더
+    if (!seenHeader) { seenHeader = true; continue; } // 표의 첫 행 = 헤더
     rows.push(cells);
   }
   if (!rows.length) fail(`${BIBLE} '${heading}' 표가 비어 있음`);
@@ -45,6 +46,7 @@ function readTable(md, heading) {
 const bible = readFileSync(BIBLE, "utf8");
 const movements = readTable(bible, "### 이동 코드");
 const triggers = readTable(bible, "### 관찰 신호 (trigger)");
+const signals = readTable(bible, "### 변화 신호 (signal)");
 
 // ── 2. 프롬프트에 넣을 블록으로 렌더 ────────────────────────────────────────
 const block = [
@@ -58,6 +60,11 @@ const block = [
   "이동을 고른 근거는 아래 관찰 신호 중 1~3개로 지목한다.",
   "",
   ...triggers.map(([id, seen]) => `- ${id} — ${seen}`),
+  "",
+  "직전 이동이 관점을 옮겼는지는, 사용자가 방금 한 말에서만 관찰한다.",
+  "성공 여부를 판정하지 않는다. 사람이 아니라 말의 변화만 본다. 없으면 빈 목록이다.",
+  "",
+  ...signals.map(([id, seen]) => `- ${id} — ${seen}`),
   "",
   END,
 ].join("\n");
@@ -89,7 +96,8 @@ const movesFile =
   `export const MOVEMENT_NAMES: Record<string, string> = ${JSON.stringify(
     Object.fromEntries(movements.map((r) => [r[0], r[1]])),
   )};\n` +
-  `export const TRIGGER_IDS = ${JSON.stringify(triggers.map((r) => r[0]))} as const;\n`;
+  `export const TRIGGER_IDS = ${JSON.stringify(triggers.map((r) => r[0]))} as const;\n` +
+  `export const SIGNAL_IDS = ${JSON.stringify(signals.map((r) => r[0]))} as const;\n`;
 
 if (process.argv.includes("--write")) {
   if (nextDoc !== doc) writeFileSync(DOC, nextDoc);
