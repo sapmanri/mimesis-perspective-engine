@@ -18,7 +18,7 @@
 9. `docs/MANRI_FOUNDATION_CONTRACT.md` — 상호 무지 계약, **확정** (엔진은 공감·UI·말투·예약·공간을 모른다 / 경험층은 Rule을 복사하지 않는다 / **'엔진'은 보호 용어 — Foundation만 가리킨다**)
 10. `docs/manri-visual-bible/` — 공간의 헌법 (★5 판정, 확정 임박 — 허용/금지 반응 목록은 motion-and-sound 1절)
 11. `docs/manri-conversation-bible/` — 대화의 헌법 + T0·이동 문법 + 예시 107편 (★4 — T0·허락체·기계화 방지 반영됨)
-12. `docs/MANRI_LIBRARY_EXPRESSION_V2.md` — 현행 서비스 표현 명세 **v2.1** (예약 의식·용어 규율·KPI 재설계 반영)
+12. `docs/MANRI_LIBRARY_EXPRESSION_V2.md` — 현행 서비스 표현 명세 **v2.2** (예약 순서: 좌석 선택·문장 발급은 **사전 예약 단계**, 입장 시 확인만. 둘러보기/예약 세션 분리. + v2.1 용어 규율·KPI 재설계)
 
 ## 절대 원칙 (전부 Vase 판정으로 확정된 것)
 - **프롬프트는 창작물이 아니라 파생물** — `functions/_lib/prompt.ts`는 `docs/CLAUDE_SYSTEM_PROMPT_V1.md`에서 기계 추출. 수정은 문서에서만: `node scripts/verify-prompt.mjs --write`. 게이트: `npm run verify` (배포 전 필수).
@@ -45,5 +45,6 @@
 
 ## 현재 상태 (2026-07-19 밤 — 2차 판정 반영·재검증 완료)
 1차 검수(★5·★5·★4·★4) → 2차 판정 4건 전부 반영: ① silence 반응("불 일렁") 삭제 — 공간은 독립 물리 시간만 따름(허용/금지 목록: motion-and-sound 1절) ② Expression v2.1 — 예약 의식이 흐름 앞단에, 예약 문장은 Foundation 비입력 ③ '엔진' 보호 용어화 ④ KPI 재설계 — 행동 지표/관점 이동 지표 분리, 핵심 질문 "사용자의 말 속에서 처음 질문과 다른 자리가 새로 나타났는가", 자동 판정은 내부 검토용만(결제·등급·평가 연결 금지).
-**확정: Constitution(개정 규율 수정 조건 이행) · Manifesto v1.1 · Foundation Contract.** 재검증 결과 신규 모순 0건 (`docs/CONSTITUTION_VALIDATION_20260719.md` 2차).
+**확정: Constitution(개정 규율 수정 조건 이행) · Manifesto v1.1 · Foundation Contract.** 재검증 2차·3차 모두 신규 모순 0건 (`docs/CONSTITUTION_VALIDATION_20260719.md`).
+**예약 순서 확정 (3차 봉합)**: 좌석 선택·입장 문장 발급 = 사전 예약 단계 / 입장 = 문 앞 확인("예약하고 오셨나요?")→예약된 자리로 안내. 둘러보기(세션 없음)와 예약 세션 분리. 비예약자에게 거짓말 금지 — 예약제 규칙을 그대로 말한다. Validation은 이제 문서↔문서 + **문서↔운영 규칙** 축을 포함.
 **다음 순서 (Vase 확정)**: 입구 기준 컷 **단 한 장** 생성(`docs/manri-visual-bible/prompts/ENTRANCE_REFERENCE_CUT_SPEC.md` — 조립 완료 프롬프트·전수 대조 체크리스트 포함, 생성은 Vase 외부 도구) → 오브젝트·평면·빛·카메라 전수 대조 → 통과 시에만 좌석별 기준 컷 → 이동 프로토타입 → 마지막에 대화 결합 → 프롬프트 v3 재번역 → 평가(로드맵 05).
