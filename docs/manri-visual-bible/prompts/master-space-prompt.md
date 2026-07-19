@@ -41,10 +41,18 @@ remove, move, or restyle furniture or these objects.
 ### camera lock
 
 ```text
-CAMERA: 35mm full-frame lens only. Eye height 150cm standing / 100-115cm seated.
+CAMERA: 35mm full-frame lens for all normal views.
+The entrance signature reference cut alone may use a restrained 28mm full-frame lens
+to establish the spatial relationship of all three seats in one room.
+No lens wider than 28mm. Eye height 150cm standing / 100-115cm seated.
 Aperture f/4 (f/2.8 only for the armchair corner). Human walking-pace movement only.
 No drone shots, no orbit, no crane, no fisheye, no speed ramps, no slow motion.
 ```
+
+(28mm 예외의 근거 — Vase 판정 2026-07-19: 35mm ±27° 화각으로는 문에서 흔들의자
+38°·큰 의자 30°가 프레임 밖 — 35mm라 적고 광각 구도를 요구하면 조상 컷부터 카메라
+헌법이 거짓이 된다. 24mm는 방이 실제보다 넓고 웅장해지므로 금지. 좌석별 기준 컷부터
+다시 35mm 고정.)
 
 ### material lock
 
@@ -66,10 +74,19 @@ This layout never changes between generations.
 
 ```text
 [SPACE] + [LOCKS] + View from the entrance door looking north into the room, eye
-height 150cm, 35mm: firelight and rocking chair on the left third, desk under the
-glowing north window at center distance, lamp-lit armchair corner on the right,
-rug edge in the lower foreground. All three light pools visible in one frame.
-Early evening. + [NEGATIVE]
+height 150cm, restrained 28mm full-frame lens: firelight and the edge of the rocking
+chair on the left, desk beneath the north window at center distance, the window
+holding the last fading blue-grey dusk light rather than glowing daylight, lamp
+light and the partial outline of the armchair on the right, rug edge in the lower
+foreground. All three pools of light visible as parts of one continuous room.
+Early evening. Show only what this viewpoint would naturally reveal; do not force
+every fixed object to face the camera or become fully visible. + [NEGATIVE]
 ```
+
+- 저녁 기준 컷의 빛 해석 (Vase 판정): firelight 1900K · lamp 2400K · 북창은
+  **fading blue-grey dusk ambient light**. [SPACE]의 5000K 회백 북광은 **낮 장면의
+  규칙**으로 남고, 저녁 컷에는 강제 적용하지 않는다.
+- 기준 컷의 목적은 세 좌석의 상품 사진이 아니라 **세 자리가 같은 방 안에 존재한다는
+  관계의 증명**이다. 좌석의 온전한 모습은 이후 35mm 좌석별 기준 컷에서 검증한다.
 
 검수 통과한 기준 컷 1장을 이후 모든 생성의 image reference로 사용한다.
