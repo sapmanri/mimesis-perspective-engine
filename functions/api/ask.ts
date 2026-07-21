@@ -49,6 +49,13 @@ const RECORD_MOVEMENT_TOOL: Anthropic.Tool = {
 const MOVEMENT_REMINDER =
   "이번 턴도 되비춤·질문 본문과 함께 record_movement를 정확히 한 번 호출한다.";
 
+// 세션 첫머리에는 복원할 이동이 없어 이력이 '도구 없는 대화'로만 보인다.
+// 그래서 초반 턴이 자주 빠졌다(실측 2026-07-22: 5턴 중 1·3턴 누락).
+// 아직 한 번도 기록되지 않았을 때는 더 분명히 말한다.
+const MOVEMENT_REMINDER_FIRST =
+  "이 자리의 첫 기록이다. 되비춤과 질문 본문을 쓰고, 같은 응답 안에서 record_movement를 " +
+  "반드시 한 번 호출한다. 본문만 쓰고 끝내면 이 턴은 기록되지 않는다.";
+
 // 클라이언트 이력에는 본문만 남는다(이동은 사용자에게 보이지 않으므로).
 // 그대로 보내면 모델이 자기 과거를 '도구 없이 텍스트만' 낸 것으로 보고 호출을 건너뛴다
 // (실사용 2026-07-20: 4턴 중 1턴만 기록). 저장된 이동으로 이력을 실제 모양대로 복원한다.
@@ -166,7 +173,10 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
       // 마지막의 role:"system"은 캐시된 앞부분을 건드리지 않는다 (Opus 4.8).
       messages: [
         ...rebuildHistory(messages, priorMovements),
-        { role: "system", content: MOVEMENT_REMINDER },
+        {
+          role: "system",
+          content: priorMovements.length ? MOVEMENT_REMINDER : MOVEMENT_REMINDER_FIRST,
+        },
       ],
     });
   } catch (err) {
