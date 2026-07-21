@@ -62,6 +62,18 @@ export interface MovementLog {
   observed_at_turn?: number;
 }
 
+// 이 세션에 지금까지 남은 이동 기록을 읽는다.
+export async function readMovements(env: Env, uuid: string): Promise<MovementLog[]> {
+  try {
+    const row = await env.DB.prepare("SELECT movements_json FROM visits WHERE uuid = ?")
+      .bind(uuid)
+      .first<{ movements_json: string | null }>();
+    return row?.movements_json ? (JSON.parse(row.movements_json) as MovementLog[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 // 이번 턴에 관찰된 신호를 '직전 이동'에 되돌려 붙인다.
 // 지금 사용자가 보인 변화는 직전 턴의 이동이 만든 것이기 때문이다.
 export function linkMovements(

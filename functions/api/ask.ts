@@ -1,46 +1,107 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT } from "../_lib/prompt";
 import { json, rateLimitKey, type Env } from "../_lib/common";
-import { SEATS, validateConversation, saveVisit, type Turn, type MovementLog } from "../_lib/visit";
+import {
+  SEATS,
+  validateConversation,
+  saveVisit,
+  readMovements,
+  type Turn,
+  type MovementLog,
+} from "../_lib/visit";
 import { NOT_RESERVED_MESSAGE, readTicket } from "../_lib/pass";
 import { MOVEMENT_CODES, TRIGGER_IDS, SIGNAL_IDS } from "../_lib/movements";
 
-// reply(사용자에게)와 movement(내부 기록)를 분리해 받는다.
+// 이동은 도구 호출로 받는다 — 되비춤·질문은 본문 그대로 자유롭게 쓰게 둔다.
+//
+// 예전엔 output_config.format으로 {reply, movement}를 통째로 JSON으로 받았는데,
+// 제약 디코딩이 한국어 산문을 손상시켰다 (실사용 2026-07-20: "마스터 샷"→"마스터 피겨",
+// ".So they가 지 시서…"). 산문을 JSON 밖으로 빼면 그 위험이 사라지고,
+// 본문(text block)과 이동(tool_use block)이 API 층위에서 애초에 분리된다.
+//
 // 코드·신호 목록은 Conversation Bible에서 생성된 movements.ts가 정본이다 — 여기서 다시 적지 않는다.
-const MOVEMENT_SCHEMA = {
-  type: "object",
-  properties: {
-    reply: {
-      type: "string",
-      description: "사용자에게 보일 되비춤(0~3문장)과 질문 하나. 이동 코드·이름·신호를 절대 포함하지 않는다.",
-    },
-    movement: {
-      type: "object",
-      properties: {
-        code: { type: "string", enum: [...MOVEMENT_CODES], description: "이번 턴에 실제로 고른 이동" },
-        name: { type: "string", description: "그 이동의 이름" },
-        triggers: {
-          type: "array",
-          // minItems/maxItems는 structured outputs가 받지 않는다 — 개수는 코드에서 자른다.
-          items: { type: "string", enum: [...TRIGGER_IDS] },
-          description: "이 이동을 고른 근거가 된 관찰 신호. 1~3개.",
-        },
+const RECORD_MOVEMENT_TOOL: Anthropic.Tool = {
+  name: "record_movement",
+  description:
+    "이번 턴에 고른 이동 문법과, 사용자의 방금 말에서 관찰된 변화를 기록한다. " +
+    "매 턴 본문(되비춤+질문)과 함께 정확히 한 번 호출한다. 사용자에게는 보이지 않는다.",
+  input_schema: {
+    type: "object",
+    properties: {
+      code: { type: "string", enum: [...MOVEMENT_CODES], description: "이번 턴에 실제로 고른 이동" },
+      name: { type: "string", description: "그 이동의 이름" },
+      triggers: {
+        type: "array",
+        items: { type: "string", enum: [...TRIGGER_IDS] },
+        description: "이 이동을 고른 근거가 된 관찰 신호 1~3개",
       },
-      required: ["code", "name", "triggers"],
-      additionalProperties: false,
+      signals: {
+        type: "array",
+        items: { type: "string", enum: [...SIGNAL_IDS] },
+        description:
+          "직전 이동 뒤 사용자의 말에서 관찰된 변화. 없으면 빈 배열. 성공 여부는 판정하지 않는다.",
+      },
     },
-    signals: {
-      type: "array",
-      // 직전 이동이 만든 변화를 사용자의 방금 말에서만 관찰한다.
-      // 성공 판정이 아니다 — 없으면 빈 배열. 억지로 찾지 않는다.
-      items: { type: "string", enum: [...SIGNAL_IDS] },
-      description:
-        "사용자가 방금 한 말에서 관찰된 변화 신호. 없으면 빈 배열. 성공 여부는 판정하지 않는다.",
-    },
+    required: ["code", "name", "triggers", "signals"],
   },
-  required: ["reply", "movement", "signals"],
-  additionalProperties: false,
-} as const;
+};
+
+const MOVEMENT_REMINDER =
+  "이번 턴도 되비춤·질문 본문과 함께 record_movement를 정확히 한 번 호출한다.";
+
+// 클라이언트 이력에는 본문만 남는다(이동은 사용자에게 보이지 않으므로).
+// 그대로 보내면 모델이 자기 과거를 '도구 없이 텍스트만' 낸 것으로 보고 호출을 건너뛴다
+// (실사용 2026-07-20: 4턴 중 1턴만 기록). 저장된 이동으로 이력을 실제 모양대로 복원한다.
+function rebuildHistory(messages: Turn[], prior: MovementLog[]): Anthropic.MessageParam[] {
+  const byTurn = new Map(prior.map((m) => [m.turn, m]));
+  const out: Anthropic.MessageParam[] = [];
+  let pending: string | null = null;
+
+  messages.forEach((m, i) => {
+    if (m.role === "assistant") {
+      const mv = byTurn.get(i);
+      if (!mv) {
+        out.push({ role: "assistant", content: m.content });
+        return;
+      }
+      const id = `mv_${i}`;
+      out.push({
+        role: "assistant",
+        content: [
+          { type: "text", text: m.content },
+          {
+            type: "tool_use",
+            id,
+            name: "record_movement",
+            input: {
+              code: mv.movement,
+              name: mv.name,
+              triggers: mv.triggers,
+              signals: mv.subsequent_signals ?? [],
+            },
+          },
+        ],
+      });
+      pending = id;
+      return;
+    }
+    // tool_use 뒤의 user 턴은 tool_result를 먼저 담아야 한다.
+    if (pending) {
+      out.push({
+        role: "user",
+        content: [
+          { type: "tool_result", tool_use_id: pending, content: "기록됨" },
+          { type: "text", text: m.content },
+        ],
+      });
+      pending = null;
+      return;
+    }
+    out.push({ role: "user", content: m.content });
+  });
+
+  return out;
+}
 
 // 한 턴 = 한 요청이다. 10이면 정상 대화가 열 턴에서 막힌다(실사용 확인 2026-07-20).
 // 서재의 속도를 지키면서도 대화를 끊지 않는 선으로 올린다. 남용 차단 목적은 유지.
@@ -85,24 +146,28 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   }
   await env.PENDING.put(rlKey, String(count + 1), { expirationTtl: 60 });
 
+  const priorMovements = await readMovements(env, uuid);
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 1 });
 
   let response: Anthropic.Message;
   try {
     response = await client.messages.create({
       model: "claude-opus-4-8",
-      // 사고 토큰 + 구조화 출력(reply·movement·signals)이 함께 들어간다.
-      // 1024는 부족해서 JSON이 중간에 잘렸다 (실사용 확인 2026-07-20).
+      // 사고 토큰 + 본문 + 도구 호출이 함께 들어간다. 1024로는 잘렸다(실사용 2026-07-20).
       max_tokens: 4096,
       thinking: { type: "adaptive" },
       system: [
         { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
         { type: "text", text: `[좌석 맥락] 사용자가 앉은 자리: ${SEATS[seat]}` },
       ],
-      // 이동은 사용자에게 가는 reply와 분리된 자리로 받는다.
-      // 라벨을 나중에 붙이는 게 아니라, 엔진이 옮기기 전에 고른 것을 그대로 받는다.
-      output_config: { format: { type: "json_schema", schema: MOVEMENT_SCHEMA } },
-      messages,
+      // 이동은 도구 호출로만 받는다. 본문(되비춤+질문)은 제약 없는 자유 문장으로 나온다.
+      tools: [RECORD_MOVEMENT_TOOL],
+      // 저장된 이동으로 이력을 실제 모양(본문+도구 호출)대로 복원해 보낸다.
+      // 마지막의 role:"system"은 캐시된 앞부분을 건드리지 않는다 (Opus 4.8).
+      messages: [
+        ...rebuildHistory(messages, priorMovements),
+        { role: "system", content: MOVEMENT_REMINDER },
+      ],
     });
   } catch (err) {
     if (err instanceof Anthropic.RateLimitError || err instanceof Anthropic.InternalServerError) {
@@ -123,46 +188,36 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
     });
   }
 
-  const raw = response.content
+  // 출력이 잘렸으면 문장이 끝나지 않았다 — 반쪽을 보내지 않는다.
+  if (response.stop_reason === "max_tokens") {
+    return json({ error: "말이 길어져 끝맺지 못했습니다. 다시 한번 적어주세요." }, 502);
+  }
+
+  // 본문은 text block 그대로. JSON을 거치지 않으므로 문장이 손상되지 않는다.
+  const reply = response.content
     .filter((b): b is Anthropic.TextBlock => b.type === "text")
     .map((b) => b.text)
     .join("\n")
     .trim();
 
-  // 출력이 잘렸으면 부분 JSON이다 — 절대 사용자에게 보내지 않는다.
-  if (response.stop_reason === "max_tokens") {
-    return json({ error: "말이 길어져 끝맺지 못했습니다. 다시 한번 적어주세요." }, 502);
-  }
-
-  // 구조화 출력: { reply, movement:{code,name,triggers}, signals }
-  let reply = "";
-  let movement: { code?: string; name?: string; triggers?: string[] } | null = null;
-  let signals: string[] = [];
-  try {
-    const parsed = JSON.parse(raw) as {
-      reply?: string;
-      movement?: { code?: string; name?: string; triggers?: string[] };
-      signals?: string[];
-    };
-    reply = (parsed.reply ?? "").trim();
-    movement = parsed.movement ?? null;
-    signals = Array.isArray(parsed.signals) ? parsed.signals : [];
-  } catch {
-    // 스키마가 깨져도 원출력을 그대로 흘리지 않는다 — reply 필드만 건져낸다.
-    const salvaged = raw.match(/"reply"\s*:\s*("(?:[^"\\]|\\.)*")/);
-    if (salvaged) {
-      try {
-        reply = (JSON.parse(salvaged[1]) as string).trim();
-      } catch {
-        reply = "";
-      }
-    }
-  }
+  // 이동은 tool_use block에서만 읽는다 — 본문과 애초에 섞이지 않는다.
+  const call = response.content.find(
+    (b): b is Anthropic.ToolUseBlock => b.type === "tool_use" && b.name === "record_movement",
+  );
+  const input = (call?.input ?? {}) as {
+    code?: string;
+    name?: string;
+    triggers?: string[];
+    signals?: string[];
+  };
+  const movement = input.code ? { code: input.code, name: input.name, triggers: input.triggers } : null;
+  const signals = Array.isArray(input.signals) ? input.signals : [];
 
   // 최종 방어선: 내부 표지가 한 글자라도 섞였으면 내보내지 않는다.
-  // (이동 코드·신호·스키마 키는 사용자에게 절대 보이지 않는다 — 보이면 공략집이 된다.)
+  // (이동 코드·신호는 사용자에게 절대 보이지 않는다 — 보이면 공략집이 된다.)
   const leaked =
     /"(reply|movement|triggers|signals|code|name)"\s*:/.test(reply) ||
+    /\brecord_movement\b/.test(reply) ||
     /\b(T(?:10|[0-9]))\b/.test(reply) ||
     [...TRIGGER_IDS, ...SIGNAL_IDS].some((id) => reply.includes(id));
   if (leaked) {
