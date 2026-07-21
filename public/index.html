@@ -134,11 +134,17 @@
   /* 남길지 묻는 자리 — 권하지 않는다. 조용히 있다가, 물으면 답만 받는다. */
   .consent{margin:20px 0 0;padding-top:16px;border-top:1px solid rgba(244,238,228,.1)}
   .consent-ask{margin:0 0 12px;font-size:13px;line-height:1.7;color:#a8998a}
+  .consent-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .consent-btn{border:1px solid var(--line);background:transparent;color:#c9bcab;
     padding:8px 15px;border-radius:999px;font:inherit;font-size:12.5px;cursor:pointer;
     transition:background .2s,color .2s}
   .consent-btn:hover{background:rgba(255,255,255,.07);color:var(--paper)}
   .consent-btn:disabled{opacity:.45;cursor:default}
+  .consent-btn.primary{background:rgba(244,238,228,.9);color:#28231e;border-color:transparent}
+  .consent-btn.primary:hover{background:var(--paper);color:#28231e}
+  .consent-btn.plain{border-color:transparent;color:#8d8073}
+  .consent-btn.plain:hover{color:#c9bcab;background:transparent}
+  .consent-num{font-size:12px;letter-spacing:.1em;color:#a8998a}
   .consent-note{margin:10px 0 0;font-size:12px;letter-spacing:.1em;color:#8d8073}
   .consent-undo{margin:8px 0 0;border:0;background:none;padding:0;color:#8d8073;
     font:inherit;font-size:12px;text-decoration:underline;cursor:pointer}
@@ -201,7 +207,9 @@
       <div class="eyebrow">RESERVATION GATE</div>
       <h2>예약하고 오셨나요?</h2>
       <p>문 앞에서 받은 문장을 들려주세요.</p>
-      <input id="phraseInput" class="phrase-input" autocomplete="off" placeholder="입장 문장을 적어주세요" />
+      <input id="phraseInput" class="phrase-input" placeholder="입장 문장을 적어주세요"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+             data-lpignore="true" data-1p-ignore />
       <div class="hint" id="gateHint"></div>
       <div class="btn-row">
         <button class="btn ghost" id="gateBack">돌아가기</button>
@@ -321,7 +329,12 @@ document.getElementById('openDoor').onclick=enterRoom;
 document.getElementById('tourBtn').onclick=()=>{
   reserved=false; hide(modeScreen); hotspots.classList.add('active'); show(tourPanel); status.textContent='FREE TOUR · NO SESSION';
 };
-document.getElementById('reserveBtn').onclick=()=>{hide(modeScreen);show(gateScreen);gateHint.textContent='';setTimeout(()=>phraseInput.focus(),300)};
+document.getElementById('reserveBtn').onclick=()=>{
+  // 칸을 비우고 연다. 예약 문장은 남의 것이므로 다음 사람에게 보이면 안 된다
+  // (autocomplete=off를 브라우저가 무시하는 경우가 있다).
+  hide(modeScreen);show(gateScreen);gateHint.textContent='';phraseInput.value='';
+  setTimeout(()=>phraseInput.focus(),300);
+};
 document.getElementById('gateBack').onclick=()=>{hide(gateScreen);show(modeScreen)};
 
 // 문턱 — 문장 판정은 서버(/api/enter)가 한다. 이 파일에는 문장이 없다.
@@ -428,57 +441,221 @@ function addClosing(c){
   }
   const sig=document.createElement('p');sig.className='closing-sign';sig.textContent='— 만리서재';
   box.appendChild(sig);
-  box.appendChild(consentBlock());
+  box.appendChild(closingChoices(c));
   msgBox.appendChild(box);scrollToLatest();
 }
 
-// 기록으로 남길지 묻는 자리. 누르지 않으면 남지 않는다 — 그게 기본값이다.
-// (서재의 방문 기록은 원래 완전 내부 보관이다. 밖으로 나갈 수 있는 문은 여기 하나뿐이다.)
-function consentBlock(){
+// 자리를 뜨는 세 갈래. 무엇을 눌러도 되고, 아무것도 안 눌러도 된다.
+//   ① 기록으로 남기고 가져가기  ② 가져가기만  ③ 그냥 나가기
+// '남긴다'와 '가져간다'는 다른 일이다 — 가져가는 건 그 사람 것이고,
+// 남기는 건 서재에 두는 것이라 동의가 필요하다. 그래서 버튼을 갈라 둔다.
+function closingChoices(c){
   const wrap=document.createElement('div');wrap.className='consent';
   const ask=document.createElement('p');ask.className='consent-ask';
-  ask.textContent='오늘 이 대화를 만리서재의 기록으로 남겨도 됩니다. 남기지 않으셔도 괜찮습니다.';
-  const btn=document.createElement('button');btn.className='consent-btn';
-  btn.textContent='기록으로 남깁니다';
+  ask.textContent='오늘 나눈 이야기를 한 장으로 가져가실 수 있습니다. 만리서재의 기록으로 남겨도 됩니다.';
+  const row=document.createElement('div');row.className='consent-row';
   const note=document.createElement('p');note.className='consent-note';
-  wrap.appendChild(ask);wrap.appendChild(btn);wrap.appendChild(note);
+  wrap.appendChild(ask);wrap.appendChild(row);wrap.appendChild(note);
 
-  // 지금 이 자리의 uuid·좌석을 붙들어 둔다 — 나중에 눌러도 그때 자리로 남는다.
-  const token=seatToken, held={uuid,seat:seats[currentSeat].key};
-  const call=async (agreed)=>{
-    btn.disabled=true;
+  const mk=(label,cls)=>{const b=document.createElement('button');b.className='consent-btn'+(cls?' '+cls:'');b.textContent=label;row.appendChild(b);return b};
+  const keepTake=mk('기록으로 남기고 가져가기','primary');
+  const takeOnly=mk('가져가기만');
+  const justGo=mk('그냥 나가기','plain');
+
+  // 지금 이 자리의 것들을 붙들어 둔다 — 나중에 눌러도 그때 자리로 남는다.
+  const token=seatToken, held={uuid,seat:seats[currentSeat].key,
+    seatTitle:seats[currentSeat].title, talk:messages.slice()};
+
+  const busyAll=(v)=>[keepTake,takeOnly,justGo].forEach(b=>b.disabled=v);
+
+  const consent=async (agreed)=>{
+    const r=await fetch('/api/consent',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({uuid:held.uuid,seat:held.seat,agreed})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'');
+    return d;
+  };
+
+  // 가져가기 — 기기의 저장·공유 시트로 넘긴다(사진 앱·파일 등은 기기가 고른다).
+  const take=async (label)=>{
+    note.textContent='한 장으로 만드는 중입니다…';
     try{
-      const r=await fetch('/api/consent',{method:'POST',headers:{'content-type':'application/json'},
-        body:JSON.stringify({uuid:held.uuid,seat:held.seat,agreed})});
-      const d=await r.json();
-      if(!r.ok)throw new Error(d.error||'');
-      return d;
+      const blob=await renderKeepsake({talk:held.talk,closing:c,seatTitle:held.seatTitle,label});
+      const file=new File([blob],'만리서재.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'만리서재'});
+        note.textContent='가져가셨습니다.';
+      }else{
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');a.href=url;a.download='만리서재.png';
+        document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),4000);
+        note.textContent='내려받았습니다.';
+      }
+      return true;
     }catch(e){
-      note.textContent='지금은 남기지 못했습니다. 잠시 후에 다시 눌러주세요.';
-      btn.disabled=false;throw e;
+      // 공유 시트를 그냥 닫은 것은 실패가 아니다.
+      if(e&&e.name==='AbortError'){note.textContent='';return true}
+      note.textContent='그림을 만들지 못했습니다. 다시 눌러주세요.';
+      return false;
     }
   };
 
-  btn.onclick=async ()=>{
-    let d;try{d=await call(true)}catch{return}
+  keepTake.onclick=async ()=>{
+    busyAll(true);
+    let d=null;
+    try{ d=await consent(true); }
+    catch{ note.textContent='지금은 남기지 못했습니다. 잠시 후에 다시 눌러주세요.'; busyAll(false); return; }
     if(token!==seatToken)return; // 이미 떠난 자리의 늦은 응답은 그리지 않는다
+    await take(d.label||null);
+    if(token!==seatToken)return;
     ask.textContent='이 자리가 기록으로 남았습니다.';
-    btn.remove();
-    note.textContent=d.label||'';
+    row.innerHTML='';
+    if(d.label){const n=document.createElement('span');n.className='consent-num';n.textContent=d.label;row.appendChild(n)}
     const undo=document.createElement('button');undo.className='consent-undo';
     undo.textContent='역시 지울래요';
     undo.onclick=async ()=>{
       undo.disabled=true;
-      try{await call(false)}catch{undo.disabled=false;return}
+      try{await consent(false)}catch{undo.disabled=false;return}
       if(token!==seatToken)return;
-      ask.textContent='기록을 지웠습니다. 이 대화는 남지 않습니다.';
-      note.textContent='';undo.remove();
+      ask.textContent='기록을 지웠습니다. 이 대화는 남지 않습니다. 가져가신 한 장은 그대로 두셔도 됩니다.';
+      row.innerHTML='';note.textContent='';
     };
     wrap.appendChild(undo);
     scrollToLatest();
   };
+
+  takeOnly.onclick=async ()=>{
+    busyAll(true);
+    const ok=await take(null);
+    if(token!==seatToken)return;
+    if(ok){ ask.textContent='가져가셨습니다. 이 대화는 서재에 남지 않습니다.'; row.innerHTML=''; }
+    else busyAll(false);
+  };
+
+  justGo.onclick=()=>{ if(token!==seatToken)return; leaveSeat(); };
+
   return wrap;
 }
+
+// ── 가져가는 한 장 ───────────────────────────────────────────────────────────
+// 화면을 찍는 게 아니라 다시 그린다. 채팅 기록이 아니라 오늘의 자리를 적은 종이다.
+// (서재는 채팅 UI가 아니므로, 가져가는 것도 채팅 캡처처럼 보이면 안 된다.)
+const KEEP_W=1080, KEEP_PAD=88;
+const SERIF='Georgia,"Times New Roman",serif';
+const SANS='"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif';
+
+// 한 줄에 담기는 만큼 끊는다. 한국어는 단어 경계가 성기므로 글자 단위로도 끊는다.
+function wrapLines(ctx,text,maxW){
+  const out=[];
+  String(text).split(/\n/).forEach(para=>{
+    let line='';
+    for(const ch of para){
+      const t=line+ch;
+      if(ctx.measureText(t).width>maxW && line){ out.push(line); line=ch==='\u0020'?'':ch; }
+      else line=t;
+    }
+    out.push(line);
+  });
+  return out;
+}
+
+async function renderKeepsake({talk,closing,seatTitle,label}){
+  try{ await document.fonts.ready; }catch{}
+  const m=document.createElement('canvas').getContext('2d');
+  const W=KEEP_W, P=KEEP_PAD, innerW=W-P*2;
+  const blocks=[];   // 두 번 그린다: 먼저 높이를 재고, 그 다음 진짜로 그린다
+  let y=0;
+
+  const push=(b,h)=>{ blocks.push({...b,y}); y+=h; };
+  const textBlock=(text,{font,size,color,lh=1.5,align='left',gap=0,maxW=innerW,x=P})=>{
+    if(!text)return;
+    m.font=`${size}px ${font}`;
+    const lines=wrapLines(m,text,maxW);
+    push({t:'text',lines,font,size,color,lh,align,x,maxW},lines.length*size*lh+gap);
+  };
+
+  y+=P;
+  textBlock('MANRI LIBRARY',{font:SANS,size:19,color:'#a8998a',gap:16});
+  const d=new Date();
+  const stamp=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()} · ${seatTitle||''}`;
+  textBlock(stamp,{font:SANS,size:23,color:'#8d8073',gap:52});
+
+  const part=(head,body,size)=>{
+    if(!body)return;
+    textBlock(head,{font:SANS,size:20,color:'#a8998a',gap:14});
+    textBlock(body,{font:SERIF,size,color:'#f4eee4',lh:1.5,gap:42});
+  };
+  part('오늘 새롭게 발견한 질문',closing&&closing.discovered_question,44);
+  part('오늘 처음의 질문',closing&&closing.first_question,30);
+  part('오늘 당신이 남긴 문장',closing&&closing.user_sentence,30);
+
+  push({t:'rule'},44);
+  textBlock('나눈 이야기',{font:SANS,size:20,color:'#a8998a',gap:26});
+
+  // 대화는 조용한 활자로. 말한 사람은 색이 아니라 자리로 구분한다.
+  (talk||[]).forEach(turn=>{
+    const mine=turn.role==='user';
+    const size=25, bw=innerW*0.86;
+    m.font=`${size}px ${SANS}`;
+    const lines=wrapLines(m,turn.content,bw-56);
+    const h=lines.length*size*1.62+44;
+    push({t:'bubble',lines,size,mine,bw,h},h+16);
+  });
+
+  if(closing&&closing.farewell){
+    push({t:'rule'},44);
+    textBlock(closing.farewell,{font:SERIF,size:27,color:'#cdbba6',lh:1.6,gap:34});
+  }
+  // label은 이미 '만리서재 000003' 꼴이다 — 앞에 또 붙이면 겹친다.
+  textBlock(label?`— ${label}`:'— 만리서재',{font:SANS,size:21,color:'#8d8073',align:'right',gap:0});
+  y+=P;
+
+  const H=Math.ceil(y);
+  const scale=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+  const cv=document.createElement('canvas');
+  cv.width=W*scale; cv.height=H*scale;
+  const ctx=cv.getContext('2d'); ctx.scale(scale,scale);
+
+  // 바탕 — 저녁의 방 색. 위쪽에 벽난로 쪽 온기를 아주 옅게 남긴다.
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#221a14'); bg.addColorStop(.45,'#181310'); bg.addColorStop(1,'#14100d');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  const glow=ctx.createRadialGradient(W*0.18,H*0.06,0,W*0.18,H*0.06,W*0.75);
+  glow.addColorStop(0,'rgba(255,150,66,.10)'); glow.addColorStop(1,'rgba(255,150,66,0)');
+  ctx.fillStyle=glow; ctx.fillRect(0,0,W,H);
+
+  ctx.textBaseline='top';
+  for(const b of blocks){
+    if(b.t==='rule'){
+      ctx.fillStyle='rgba(244,238,228,.13)';
+      ctx.fillRect(P,b.y+20,innerW,1);
+      continue;
+    }
+    if(b.t==='text'){
+      ctx.font=`${b.size}px ${b.font}`; ctx.fillStyle=b.color;
+      ctx.textAlign=b.align==='right'?'right':'left';
+      const x=b.align==='right'?W-P:b.x;
+      b.lines.forEach((ln,i)=>ctx.fillText(ln,x,b.y+i*b.size*b.lh));
+      ctx.textAlign='left';
+      continue;
+    }
+    // 말풍선이 아니라 종이 조각에 가깝게 — 모서리를 얕게 둔다.
+    const w=b.bw, x=b.mine?W-P-w:P, r=22;
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(x,b.y,w,b.h,r);
+    else ctx.rect(x,b.y,w,b.h);
+    ctx.fillStyle=b.mine?'#ece2d4':'rgba(244,238,228,.065)';
+    ctx.fill();
+    if(!b.mine){ ctx.strokeStyle='rgba(244,238,228,.10)'; ctx.lineWidth=1; ctx.stroke(); }
+    ctx.font=`${b.size}px ${SANS}`;
+    ctx.fillStyle=b.mine?'#29231e':'#e2d7c9';
+    b.lines.forEach((ln,i)=>ctx.fillText(ln,x+28,b.y+22+i*b.size*1.62));
+  }
+
+  return await new Promise((res,rej)=>cv.toBlob(v=>v?res(v):rej(new Error('no blob')),'image/png'));
+}
+
 function addUser(text){return addMsg('user',text)}
 
 // 적은 말 → 관점 엔진. 이 함수는 질문을 만들지 않는다. 실패하면 오류를 보이고 멈춘다.
