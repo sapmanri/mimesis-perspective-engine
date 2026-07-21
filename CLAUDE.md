@@ -29,16 +29,18 @@
 - **만리서재는 채팅 UI가 아니다. 하나의 디지털 공간이다.** 말풍선·채팅 문법 금지.
 - Genome만 Edition(발견으로만 증가), Engine·Prompt·API는 Version.
 - 사용자는 엔진을 만나지 않는다 (내부 호칭 제안: Foundation). AI 자기언급 금지 — 단, 직접 물으면 정직하게 인정.
-- 기록은 서재의 호흡(자동·무표시) + **완전 내부 보관** (공개 열람 금지 — 동의 개념이 없으므로).
+- 기록은 서재의 호흡(자동·무표시) + **완전 내부 보관**. `visits`는 **공개 열람 영구 금지** — 엔진 개선용 내부 데이터일 뿐이다.
+- **밖으로 나갈 수 있는 문은 `logbook` 하나뿐이다** — 자리에서 일어난 사람이 직접 누른 대화만 `/api/consent`로 옮겨진다. 기본값은 남기지 않음(누르지 않으면 남지 않는다), 같은 자리에서 철회 가능(`agreed:false` → DELETE). 로그북·출판은 **`logbook`에서만** 뽑는다. `visits`에서 뽑는 순간 동의 없는 공개가 된다.
+- **동의는 대화까지다** — `movements_json`(이동 코드·트리거)은 `logbook`으로 옮기지 않는다. 엔진 내부 계기판은 그 사람이 남기겠다고 한 것이 아니다.
 - 안전·사실성(Layer 3)은 모든 형식·철학 위에 있다.
 - 표현 변경은 프롬프트 직접 수정이 아니라: 표현 명세 개정 → (필요시 Blueprint 개정) → 재번역.
 
 ## 서비스 (배포됨)
 - **https://manri-library.pages.dev** — Cloudflare Pages `manri-library`
-- 인프라: D1 `manri-library-archive` (records + visits 테이블), KV `PENDING`(임시·rate limit), 시크릿 ANTHROPIC_API_KEY·ADMIN_TOKEN 설정 완료
+- 인프라: D1 `manri-library-archive` (records=관점엔진 Q&A / visits=내부 전용 / **logbook=동의된 기록**), KV `PENDING`(임시·rate limit), 시크릿 ANTHROPIC_API_KEY·ADMIN_TOKEN 설정 완료
 - 배포: `npm run verify && npx wrangler pages deploy public --project-name manri-library --commit-dirty=true`
 - 모델: claude-opus-4-8, adaptive thinking, 시스템 프롬프트 cache_control
-- API: POST `/api/ask`(대화 턴, 무상태 — 이력은 클라이언트) · POST `/api/close`(일어나기, structured output) · GET `/api/admin/list`(Bearer)
+- API: POST `/api/enter`(예약 문장 판정·티켓 발급) · POST `/api/ask`(대화 턴, 무상태 — 이력은 클라이언트) · POST `/api/close`(일어나기, structured output) · POST `/api/consent`(기록으로 남기기/철회 — 모델 호출 0회) · GET `/api/admin/list`(Bearer)
 
 ## 함정 (실경험)
 - CC 브라우저 패널은 rAF 스로틀 — 전환·애니메이션이 얼어 보임(로직은 정상). 전환 체감은 **실기기 QA**.

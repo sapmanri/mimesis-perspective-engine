@@ -130,6 +130,18 @@
   .closing-farewell{margin:22px 0 0;padding-top:18px;border-top:1px solid rgba(244,238,228,.12);
     font-size:15px;line-height:1.75;color:#e2d7c9}
   .closing-sign{margin:14px 0 0;font-size:12px;letter-spacing:.1em;color:#a8998a;text-align:right}
+  /* 남길지 묻는 자리 — 권하지 않는다. 조용히 있다가, 물으면 답만 받는다. */
+  .consent{margin:20px 0 0;padding-top:16px;border-top:1px solid rgba(244,238,228,.1)}
+  .consent-ask{margin:0 0 12px;font-size:13px;line-height:1.7;color:#a8998a}
+  .consent-btn{border:1px solid var(--line);background:transparent;color:#c9bcab;
+    padding:8px 15px;border-radius:999px;font:inherit;font-size:12.5px;cursor:pointer;
+    transition:background .2s,color .2s}
+  .consent-btn:hover{background:rgba(255,255,255,.07);color:var(--paper)}
+  .consent-btn:disabled{opacity:.45;cursor:default}
+  .consent-note{margin:10px 0 0;font-size:12px;letter-spacing:.1em;color:#8d8073}
+  .consent-undo{margin:8px 0 0;border:0;background:none;padding:0;color:#8d8073;
+    font:inherit;font-size:12px;text-decoration:underline;cursor:pointer}
+  .consent-undo:hover{color:#c9bcab}
   @keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
   .composer{flex:none;display:flex;gap:10px;margin-top:14px}
   /* display:flex가 hidden 속성을 덮어써서, 일어난 뒤에도 입력칸이 남아 있었다.
@@ -407,7 +419,56 @@ function addClosing(c){
   }
   const sig=document.createElement('p');sig.className='closing-sign';sig.textContent='— 만리서재';
   box.appendChild(sig);
+  box.appendChild(consentBlock());
   msgBox.appendChild(box);scrollToLatest();
+}
+
+// 기록으로 남길지 묻는 자리. 누르지 않으면 남지 않는다 — 그게 기본값이다.
+// (서재의 방문 기록은 원래 완전 내부 보관이다. 밖으로 나갈 수 있는 문은 여기 하나뿐이다.)
+function consentBlock(){
+  const wrap=document.createElement('div');wrap.className='consent';
+  const ask=document.createElement('p');ask.className='consent-ask';
+  ask.textContent='오늘 이 대화를 만리서재의 기록으로 남겨도 됩니다. 남기지 않으셔도 괜찮습니다.';
+  const btn=document.createElement('button');btn.className='consent-btn';
+  btn.textContent='기록으로 남깁니다';
+  const note=document.createElement('p');note.className='consent-note';
+  wrap.appendChild(ask);wrap.appendChild(btn);wrap.appendChild(note);
+
+  // 지금 이 자리의 uuid·좌석을 붙들어 둔다 — 나중에 눌러도 그때 자리로 남는다.
+  const token=seatToken, held={uuid,seat:seats[currentSeat].key};
+  const call=async (agreed)=>{
+    btn.disabled=true;
+    try{
+      const r=await fetch('/api/consent',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({uuid:held.uuid,seat:held.seat,agreed})});
+      const d=await r.json();
+      if(!r.ok)throw new Error(d.error||'');
+      return d;
+    }catch(e){
+      note.textContent='지금은 남기지 못했습니다. 잠시 후에 다시 눌러주세요.';
+      btn.disabled=false;throw e;
+    }
+  };
+
+  btn.onclick=async ()=>{
+    let d;try{d=await call(true)}catch{return}
+    if(token!==seatToken)return; // 이미 떠난 자리의 늦은 응답은 그리지 않는다
+    ask.textContent='이 자리가 기록으로 남았습니다.';
+    btn.remove();
+    note.textContent=d.label||'';
+    const undo=document.createElement('button');undo.className='consent-undo';
+    undo.textContent='역시 지울래요';
+    undo.onclick=async ()=>{
+      undo.disabled=true;
+      try{await call(false)}catch{undo.disabled=false;return}
+      if(token!==seatToken)return;
+      ask.textContent='기록을 지웠습니다. 이 대화는 남지 않습니다.';
+      note.textContent='';undo.remove();
+    };
+    wrap.appendChild(undo);
+    scrollToLatest();
+  };
+  return wrap;
 }
 function addUser(text){return addMsg('user',text)}
 
