@@ -157,7 +157,7 @@
   .consent-btn.plain:hover{color:#c9bcab;background:transparent}
   .consent-num{font-size:12px;letter-spacing:.1em;color:#a8998a}
   .consent-note{margin:10px 0 0;font-size:12px;letter-spacing:.1em;color:#8d8073}
-  .consent-undo{margin:8px 0 0;border:0;background:none;padding:0;color:#8d8073;
+  .consent-undo{display:block;margin:10px 0 0;border:0;background:none;padding:0;color:#8d8073;
     font:inherit;font-size:12px;text-decoration:underline;cursor:pointer}
   .consent-undo:hover{color:#c9bcab}
   @keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
@@ -251,7 +251,6 @@
         </div>
         <div class="seat-actions">
           <button class="rise-btn" id="riseSeat">자리에서 일어나기</button>
-          <button class="close" id="closeSeat" aria-label="나가기" title="나가기">×</button>
         </div>
       </div>
       <div class="messages" id="messages"></div>
@@ -488,6 +487,23 @@ function closingChoices(c){
     return d;
   };
 
+  const saveToDisk=(blob)=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='만리서재.png';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+  };
+
+  // 공유 시트에 무엇이 뜨는지는 기기가 정한다 — 웹페이지가 그 목록을 바꿀 수 없다.
+  // (macOS는 켜져 있는 공유 확장만 보여준다.) 그래서 파일로 받는 길을 항상 함께 둔다.
+  const offerDownload=(blob)=>{
+    if(wrap.querySelector('.consent-save'))return;
+    const b=document.createElement('button');b.className='consent-undo consent-save';
+    b.textContent='파일로 내려받기';
+    b.onclick=()=>saveToDisk(blob);
+    wrap.appendChild(b);
+  };
+
   // 가져가기 — 기기의 저장·공유 시트로 넘긴다(사진 앱·파일 등은 기기가 고른다).
   const take=async (label)=>{
     note.textContent='한 장으로 만드는 중입니다…';
@@ -495,20 +511,16 @@ function closingChoices(c){
       const blob=await renderKeepsake({talk:held.talk,closing:c,seatTitle:held.seatTitle,label});
       const file=new File([blob],'만리서재.png',{type:'image/png'});
       if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:'만리서재'});
-        note.textContent='가져가셨습니다.';
+        try{ await navigator.share({files:[file],title:'만리서재'}); note.textContent=''; }
+        catch(e){ if(!e||e.name!=='AbortError')throw e; note.textContent=''; }
+        offerDownload(blob); // 시트에 원하는 앱이 없을 수도 있다
       }else{
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');a.href=url;a.download='만리서재.png';
-        document.body.appendChild(a);a.click();a.remove();
-        setTimeout(()=>URL.revokeObjectURL(url),4000);
+        saveToDisk(blob);
         note.textContent='내려받았습니다.';
       }
       return true;
     }catch(e){
-      // 공유 시트를 그냥 닫은 것은 실패가 아니다.
-      if(e&&e.name==='AbortError'){note.textContent='';return true}
-      note.textContent='그림을 만들지 못했습니다. 다시 눌러주세요.';
+      note.textContent='한 장으로 만들지 못했습니다. 다시 눌러주세요.';
       return false;
     }
   };
@@ -530,7 +542,7 @@ function closingChoices(c){
       undo.disabled=true;
       try{await consent(false)}catch{undo.disabled=false;return}
       if(token!==seatToken)return;
-      ask.textContent='기록을 지웠습니다. 이 대화는 남지 않습니다. 가져가신 한 장은 그대로 두셔도 됩니다.';
+      ask.textContent='기록을 지웠습니다. 가져가신 한 장은 그대로 두셔도 됩니다.';
       row.innerHTML='';note.textContent='';
     };
     wrap.appendChild(undo);
@@ -695,7 +707,7 @@ function setEvening(ev){
   // 한 번만 알린다. 매번 말하면 재촉이 된다.
   if(ev.warn&&ev.remaining>0&&!duskWarned){
     duskWarned=true;
-    addNotice('북창의 빛이 거의 다 빠졌습니다. 어두워지기 전에 오늘 자리를 정리해도 됩니다.');
+    addNotice('창의 빛이 얼마 남지 않았습니다. 여기서 마무리하셔도 됩니다.');
   }
 }
 
@@ -703,7 +715,7 @@ function setEvening(ev){
 async function nightfall(){
   if(closed)return;
   composerBox.hidden=true;
-  addNotice('창의 빛이 다 빠졌습니다. 오늘 자리를 정리하겠습니다.');
+  addNotice('빛이 다 빠졌습니다. 오늘 자리를 정리해 드리겠습니다.');
   await new Promise(r=>setTimeout(r,1400));
   if(closed)return;
   riseSeat.click(); // 이미 있는 마무리 길을 그대로 쓴다
@@ -755,7 +767,9 @@ answer.addEventListener('keydown',e=>{
   if(e.isComposing||e.keyCode===229)return;
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}
 });
-// 나가는 길 ①: 그냥 나가기(×) — 언제든 누를 수 있다(헤더는 스크롤되지 않는다).
+// 나가는 길: '자리에서 일어나기' 하나로 모은다.
+// (×를 없앴다 — 한 자리는 정리하고 나가는 것이 이 서재의 방식이다.
+//  마무리가 실패하면 아래에서 '그냥 나가기'로 바뀌므로 막다른 길은 없다.)
 function leaveSeat(){
   hide(seatPanel);resetRoom();
   footerNote.hidden=false;
@@ -766,7 +780,6 @@ function leaveSeat(){
   riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   if(reserved){show(modeScreen)}else{hotspots.classList.add('active');show(tourPanel)}
 }
-document.getElementById('closeSeat').onclick=leaveSeat;
 
 // 나가는 길 ②: 자리에서 일어나기 — 서재가 오늘 자리를 닫는 말을 건네고 나간다.
 // 닫는 말도 이 파일이 만들지 않는다. /api/close 가 만든다.
