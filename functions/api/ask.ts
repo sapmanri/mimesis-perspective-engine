@@ -110,6 +110,24 @@ function rebuildHistory(messages: Turn[], prior: MovementLog[]): Anthropic.Messa
   return out;
 }
 
+// ── 저녁의 길이 ──────────────────────────────────────────────────────────────
+// 자리에 끝이 없으면 수다가 된다. 그래서 한 저녁의 길이를 정해 둔다.
+// 사용자가 말할 수 있는 횟수로 센다(어시스턴트 응답은 세지 않는다).
+//
+// 공간 쪽에서는 북창 잔광이 빠지는 것으로 보이지만, 엔진은 그걸 모른다.
+// Foundation Contract: 엔진은 공간·UI·말투를 모른다. 그래서 아래 안내문은
+// 창·빛·초를 한 글자도 말하지 않고, 오직 대화의 모양으로만 말한다.
+const EVENING_SPOKEN = 14; // 한 저녁에 주고받는 횟수
+const DUSK_WARNING = 3;    // 몇 번 남았을 때부터 모아가기 시작하는가
+
+// 남은 자리가 얼마 없을 때. 새 영역을 열지 말고 지금까지 나온 것을 모으게 한다.
+// (T10 되돌아보기가 정본의 종착 문법이지만, 코드를 여기 적지 않는다 —
+//  이동 목록은 Conversation Bible에서 생성된 프롬프트가 이미 갖고 있다.)
+const CONVERGE_NOTE =
+  "이 자리는 곧 마무리로 향한다. 새로운 영역을 열지 말고, 지금까지 나온 것을 모으는 쪽으로 " +
+  "이동을 고른다. 사용자가 지쳐 있거나 무거운 것을 막 내려놓았다면 머무르는 쪽을 고른다. " +
+  "끝이 다가온다는 말은 하지 않는다 — 그건 이 자리가 알아서 알린다.";
+
 // 한 턴 = 한 요청이다. 10이면 정상 대화가 열 턴에서 막힌다(실사용 확인 2026-07-20).
 // 서재의 속도를 지키면서도 대화를 끊지 않는 선으로 올린다. 남용 차단 목적은 유지.
 const RATE_LIMIT_PER_MINUTE = 30;
@@ -153,6 +171,10 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   }
   await env.PENDING.put(rlKey, String(count + 1), { expirationTtl: 60 });
 
+  // 이번 말까지 포함해 몇 번 말했는가. 저녁이 얼마나 남았는지가 여기서 정해진다.
+  const spoken = messages.filter((m) => m.role === "user").length;
+  const remaining = Math.max(0, EVENING_SPOKEN - spoken);
+
   const priorMovements = await readMovements(env, uuid);
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 1 });
 
@@ -175,7 +197,9 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
         ...rebuildHistory(messages, priorMovements),
         {
           role: "system",
-          content: priorMovements.length ? MOVEMENT_REMINDER : MOVEMENT_REMINDER_FIRST,
+          content:
+            (priorMovements.length ? MOVEMENT_REMINDER : MOVEMENT_REMINDER_FIRST) +
+            (remaining <= DUSK_WARNING ? "\n" + CONVERGE_NOTE : ""),
         },
       ],
     });
@@ -254,6 +278,10 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
     }),
   );
 
-  // 이동은 사용자에게 절대 나가지 않는다. reply만.
-  return json({ reply });
+  // 이동은 사용자에게 절대 나가지 않는다. reply와, 저녁이 얼마나 남았는지만.
+  // (공간이 저물어 보이는 건 경험층이 그린다 — 엔진은 이 숫자를 만들지 않았다.)
+  return json({
+    reply,
+    evening: { spoken, total: EVENING_SPOKEN, remaining, warn: remaining <= DUSK_WARNING },
+  });
 };

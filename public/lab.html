@@ -21,7 +21,7 @@
     font-family: "Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
   button,input,textarea{font:inherit}
   button{cursor:pointer}
-  #app{position:relative;width:100%;height:100%;isolation:isolate}
+  #app{position:relative;width:100%;height:100%;isolation:isolate;--dusk:0}
   /* 방은 또렷하게 보여주는 그림이 아니라, 뒤에 잠겨 있는 기억이다.
      블러로 몽환을 남기되, 방이 무엇인지는 알아볼 수 있는 선까지만 (28→16px).
      가장자리가 비지 않도록 넉넉히 넘겨 깐다. */
@@ -33,7 +33,7 @@
     background-size:cover;background-position:center;
     transform:scale(1.08) translate3d(0,0,0);
     transition:transform 2.2s cubic-bezier(.18,.75,.18,1),filter 1.5s ease,background-position 2.2s ease;
-    filter:blur(16px) saturate(.85) contrast(1.02) brightness(.74);
+    filter:blur(16px) saturate(.85) contrast(1.02) brightness(calc(.74 - var(--dusk)*.22));
     will-change:transform,filter,background-position;
   }
   .room::after{
@@ -46,7 +46,8 @@
     mix-blend-mode:screen;pointer-events:none;
   }
   /* 문을 열면 더 걷힌다 — 그래도 사진처럼 또렷해지지는 않는다. */
-  .room.entered{filter:blur(11px) saturate(.94) contrast(1.03) brightness(1.05)}
+  .room.entered{filter:blur(11px) saturate(calc(.94 - var(--dusk)*.30)) contrast(1.03)
+    brightness(calc(1.05 - var(--dusk)*.62))}
   .room.focus-fire{transform:scale(1.48) translate3d(20%,4%,0);background-position:10% 55%}
   .room.focus-desk{transform:scale(1.46) translate3d(0,7%,0);background-position:50% 45%}
   .room.focus-chair{transform:scale(1.5) translate3d(-18%,3%,0);background-position:90% 52%}
@@ -54,6 +55,13 @@
     background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E")}
   .vignette{position:absolute;inset:0;pointer-events:none;z-index:5;
     box-shadow:inset 0 0 180px 70px rgba(0,0,0,.48)}
+  /* 저녁이 깊어지면 북창 잔광부터 빠진다 — 벽난로 쪽은 마지막까지 남는다.
+     (광원 봉인: 벽난로·플로어 스탠드·북창 잔광. 초는 쓰지 않는다.) */
+  .nightfall{position:absolute;inset:0;pointer-events:none;z-index:6;
+    background:
+      linear-gradient(196deg,rgba(9,13,22,.62),rgba(9,13,22,.18) 52%,rgba(9,13,22,0) 78%),
+      radial-gradient(ellipse at 16% 66%,rgba(255,150,66,.13),transparent 42%);
+    opacity:var(--dusk);transition:opacity 2.6s ease}
   .topbar{position:absolute;top:0;left:0;right:0;z-index:20;padding:22px 26px;display:flex;align-items:center;justify-content:space-between;
     background:linear-gradient(180deg,rgba(12,9,7,.72),transparent)}
   .brand{letter-spacing:.22em;font-size:14px;font-weight:650}
@@ -121,6 +129,9 @@
   .msg.sys{align-self:flex-start;max-width:100%;background:none;border:none;padding:2px 4px;
     font-size:13px;color:#bda996;font-style:italic}
   /* 마무리 — 대화가 아니라 오늘 남는 한 장. 말풍선과 구별되어야 한다. */
+  .notice{align-self:center;max-width:82%;text-align:center;margin:6px 0;
+    font-size:13px;line-height:1.8;color:#a8998a;font-style:italic;
+    animation:rise .8s ease both}
   .closing-paper{align-self:stretch;margin-top:10px;padding:26px 26px 22px;border-radius:20px;
     border:1px solid rgba(244,238,228,.16);background:rgba(244,238,228,.05);
     animation:rise .6s ease both}
@@ -172,7 +183,7 @@
 <body>
 <div id="app">
   <div id="room" class="room"></div>
-  <div class="grain"></div><div class="vignette"></div>
+  <div class="grain"></div><div class="vignette"></div><div class="nightfall"></div>
   <header class="topbar">
     <div class="brand">만리서재</div>
     <div class="status" id="status">ENTRANCE · EARLY EVENING</div>
@@ -393,6 +404,7 @@ function openSeat(key,issuedUuid){
   currentSeat=key;
   seatToken+=1; // 이 앉음의 표. 앞선 자리의 늦은 인사를 막는다.
   uuid=issuedUuid;messages=[];busy=false;closed=false;riseFailed=false;
+  duskWarned=false;document.getElementById('app').style.setProperty('--dusk','0');
   composerBox.hidden=false;answer.placeholder='오래 붙들고 있었지만 어디서부터 풀어야 할지 모르는 질문이 있나요?';
   riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   room.className='room entered focus-'+key;
@@ -658,6 +670,45 @@ async function renderKeepsake({talk,closing,seatTitle,label}){
 
 function addUser(text){return addMsg('user',text)}
 
+// ── 저녁이 깊어진다 ─────────────────────────────────────────────────────────
+// 자리에 끝이 없으면 수다가 된다. 그래서 한 저녁의 길이가 있다.
+// 남은 횟수는 서버가 세고, 여기서는 그것을 '빛이 빠지는 것'으로만 보여준다.
+// 숫자를 적어 보이지 않는다 — 남은 횟수를 세게 만들면 자리가 시험이 된다.
+let duskWarned=false;
+const STATUS_BY_DUSK=[[0,'EARLY EVENING'],[.34,'EVENING'],[.62,'DUSK'],[.86,'NIGHTFALL']];
+
+function addNotice(text){
+  const d=document.createElement('div');d.className='notice';d.textContent=text;
+  msgBox.appendChild(d);scrollToLatest();return d;
+}
+
+function setEvening(ev){
+  if(!ev||!ev.total)return;
+  const t=Math.min(1,Math.max(0,ev.spoken/ev.total));
+  document.getElementById('app').style.setProperty('--dusk',t.toFixed(3));
+  // 상단 표시는 자리를 지우지 않는다 — 시간만 앞에 붙인다.
+  let phase='EARLY EVENING';
+  for(const [at,label] of STATUS_BY_DUSK) if(t>=at) phase=label;
+  const here=seats[currentSeat];
+  status.textContent=phase+(here?' · '+here.title.toUpperCase():'');
+
+  // 한 번만 알린다. 매번 말하면 재촉이 된다.
+  if(ev.warn&&ev.remaining>0&&!duskWarned){
+    duskWarned=true;
+    addNotice('북창의 빛이 거의 다 빠졌습니다. 어두워지기 전에 오늘 자리를 정리해도 됩니다.');
+  }
+}
+
+// 빛이 다 빠지면 — 쫓아내지 않고, 자리를 정리해 드린다.
+async function nightfall(){
+  if(closed)return;
+  composerBox.hidden=true;
+  addNotice('창의 빛이 다 빠졌습니다. 오늘 자리를 정리하겠습니다.');
+  await new Promise(r=>setTimeout(r,1400));
+  if(closed)return;
+  riseSeat.click(); // 이미 있는 마무리 길을 그대로 쓴다
+}
+
 // 적은 말 → 관점 엔진. 이 함수는 질문을 만들지 않는다. 실패하면 오류를 보이고 멈춘다.
 async function send(){
   if(busy||closed)return;
@@ -683,6 +734,8 @@ async function send(){
     waiting.remove();
     String(data.reply).split(/\n{2,}/).filter(s=>s.trim())
       .forEach(p=>addGuide(p.replace(/\n/g,' ').trim()));
+    setEvening(data.evening);
+    if(data.evening&&data.evening.remaining<=0){ nightfall(); return; }
   }catch(err){
     // 질문을 지어내지 않는다. 방금 적은 말은 이력·화면에서 함께 되돌리고,
     // 적었던 문장은 입력칸으로 돌려준다(다시 치게 만들지 않는다).
@@ -702,6 +755,7 @@ function leaveSeat(){
   footerNote.hidden=false;
   seatToken+=1; // 떠난 자리의 늦은 인사를 무효로 만든다.
   uuid=null;messages=[];busy=false;closed=false;riseFailed=false;
+  duskWarned=false;document.getElementById('app').style.setProperty('--dusk','0');
   composerBox.hidden=false;
   riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   if(reserved){show(modeScreen)}else{hotspots.classList.add('active');show(tourPanel)}

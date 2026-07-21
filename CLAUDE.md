@@ -27,6 +27,7 @@
 - **이동은 선택이지 라벨이 아니다** — 엔진이 옮기기 전에 T코드를 고르고, `{reply, movement}` 구조화 출력으로 분리해 받는다. **이동 코드·이름·신호는 사용자에게 절대 나가지 않는다**(보이면 공략집이 된다). 기록은 `visits.movements_json`.
 - **효과는 판정하지 않고 관찰한다** — 이동 뒤 사용자의 말에서 변화 신호(`new_object`·`new_protected_value`·`abstract_to_scene`·`own_criterion`·`first_person_reframe`)만 관찰해 **직전 이동에 시간순으로 되붙인다**(`subsequent_signals`+`observed_at_turn`). **`success`는 저장하지 않는다** — 효과는 운영 분석에서 센다(예: `SELECT ... json_each(movements_json)`로 "T4 선택 중 후속 new_protected_value 비율"). 엔진이 사람을 평가하는 순간 판정 기계가 된다.
 - **종료 로그에 AI 판정 없음** — `outcome_json`(firstQuestion/lastSentence/userEnded)은 서버가 대화에서 그대로 꺼낸다. 모델 호출 0회.
+- **한 자리에는 끝이 있다** — 저녁은 주고받은 횟수로 깊어진다(`EVENING_SPOKEN=14`, 3회 남으면 알림). 빠지는 빛은 **북창 잔광**이고 벽난로는 남는다(초는 안 쓴다 — `no candles` 봉인 유지). 다 빠지면 쫓아내지 않고 **마무리 카드로 인도**한다. **남은 횟수를 숫자로 보이지 않는다.** 엔진은 이 규칙을 모른다 — 서버는 "새 영역을 열지 말고 모으라"는 대화 층위의 말만 건넨다(창·빛·초를 한 글자도 말하지 않는다).
 - **만리서재는 채팅 UI가 아니다. 하나의 디지털 공간이다.** 말풍선·채팅 문법 금지.
 - Genome만 Edition(발견으로만 증가), Engine·Prompt·API는 Version.
 - 사용자는 엔진을 만나지 않는다 (내부 호칭 제안: Foundation). AI 자기언급 금지 — 단, 직접 물으면 정직하게 인정.
