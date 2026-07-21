@@ -1,11 +1,10 @@
 import { json, libraryNumber, type Env } from "../../_lib/common";
+import { guard } from "../../_lib/admin";
 
 // 관리자 전용 목록 — 날짜·질문·답변. Bearer 토큰(ADMIN_TOKEN 시크릿) 필요.
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
-  const auth = request.headers.get("authorization") ?? "";
-  if (!env.ADMIN_TOKEN || auth !== `Bearer ${env.ADMIN_TOKEN}`) {
-    return json({ error: "unauthorized" }, 401);
-  }
+  const denied = await guard(request, env);
+  if (denied) return denied;
 
   const { results } = await env.DB.prepare(
     `SELECT no, question, answer, created_at,

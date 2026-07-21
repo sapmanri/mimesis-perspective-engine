@@ -45,3 +45,35 @@ CREATE TABLE IF NOT EXISTS logbook (
   engine_version TEXT,
   prompt_version TEXT
 );
+
+-- 예약 문장 — 사람마다 다르게 발급한다. 어떤 건 1회권, 어떤 건 10회권.
+--
+-- 예전엔 ENTRY_PHRASE 시크릿 하나였다. 그러면 누가 썼는지도, 몇 번 남았는지도 모른다.
+-- 문장이 곧 예약이므로, 예약을 세려면 문장이 행이어야 한다.
+CREATE TABLE IF NOT EXISTS phrases (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  phrase TEXT NOT NULL,           -- 사람에게 건네는 문장 그대로
+  match_key TEXT UNIQUE NOT NULL, -- 공백 제거본 — 대조는 이걸로 한다
+  label TEXT,                     -- 누구에게 건넨 것인가 (관리자만 본다)
+  max_uses INTEGER,               -- NULL이면 무제한
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  expires_at TEXT,                -- NULL이면 기한 없음
+  -- 'seat'  = 자리로 안내하는 예약 문장 (부분일치 — "…에서 보고 왔어요"도 통과)
+  -- 'admin' = 세 자리가 아닌 다른 문이 열린다 (완전일치만 — 실수로 열리면 안 된다)
+  kind TEXT NOT NULL DEFAULT 'seat'
+);
+
+-- 예약 문장 사용 로그. 문장을 지워도 남는다 — 그래서 문장 원문을 함께 적어둔다.
+CREATE TABLE IF NOT EXISTS phrase_uses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  phrase_id INTEGER,              -- 지워졌으면 NULL이 될 수 있다
+  phrase TEXT NOT NULL,           -- 그때 대조된 문장
+  said TEXT,                      -- 실제로 들려준 말 (어디서 왔는지의 단서)
+  uuid TEXT,                      -- 발급된 티켓
+  seat TEXT,
+  at TEXT NOT NULL,
+  ok INTEGER NOT NULL             -- 1=입장 / 0=거절(만료·소진·중지)
+);
+CREATE INDEX IF NOT EXISTS idx_phrase_uses_phrase ON phrase_uses(phrase_id);
+CREATE INDEX IF NOT EXISTS idx_phrase_uses_at ON phrase_uses(at);

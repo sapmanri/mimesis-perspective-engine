@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>만리서재 — 관리실</title>
+<meta name="robots" content="noindex,nofollow" />
+<style>
+  :root{
+    --paper:#f4eee4; --muted:#a8998a; --dim:#8d8073;
+    --line:rgba(244,238,228,.14); --warm:#c18149; --bad:#c86b5a; --good:#7f9b76;
+    --panel:rgba(28,23,18,.72);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:#15110e;color:var(--paper);
+    font-family:"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;font-size:14px}
+  body{padding:0 0 60px}
+  button,input,select,textarea{font:inherit}
+  button{cursor:pointer}
+  a{color:var(--warm)}
+
+  header{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
+    gap:16px;padding:16px 22px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(21,17,14,.98),rgba(21,17,14,.9));backdrop-filter:blur(10px)}
+  .brand{letter-spacing:.2em;font-size:13px;font-weight:650}
+  .brand small{display:block;letter-spacing:.06em;font-size:11px;color:var(--dim);font-weight:400;margin-top:3px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tab{border:1px solid var(--line);background:transparent;color:var(--muted);
+    padding:8px 14px;border-radius:999px;font-size:13px;transition:.2s}
+  .tab:hover{background:rgba(255,255,255,.06);color:var(--paper)}
+  .tab.on{background:var(--paper);color:#28231e;border-color:var(--paper)}
+  .out{border:0;background:none;color:var(--dim);font-size:12px;text-decoration:underline}
+
+  main{max-width:1180px;margin:0 auto;padding:22px}
+  section[hidden]{display:none}
+  h2{font-family:Georgia,serif;font-weight:400;font-size:22px;margin:0 0 4px}
+  .sub{color:var(--dim);font-size:12.5px;line-height:1.7;margin:0 0 20px}
+
+  .warn{border:1px solid rgba(200,107,90,.5);background:rgba(200,107,90,.1);
+    border-radius:14px;padding:14px 16px;margin:0 0 20px;font-size:13px;line-height:1.75}
+  .warn b{color:#e59d8c}
+  .warn button{margin-top:10px;border:1px solid rgba(200,107,90,.5);background:transparent;
+    color:#e59d8c;padding:7px 13px;border-radius:999px;font-size:12.5px}
+
+  .panel{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:18px;margin-bottom:20px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  label{display:block;font-size:11.5px;letter-spacing:.08em;color:var(--dim);margin-bottom:6px}
+  input[type=text],input[type=number],select{background:rgba(0,0,0,.28);color:var(--paper);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none;min-width:0}
+  input:focus,select:focus{border-color:rgba(244,238,228,.4)}
+  .grow{flex:1;min-width:200px}
+  .btn{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--paper);
+    padding:10px 16px;border-radius:999px;transition:.2s}
+  .btn:hover{background:rgba(255,255,255,.13)}
+  .btn.primary{background:var(--paper);color:#28231e;border-color:var(--paper)}
+  .btn.small{padding:6px 11px;font-size:12px}
+  .btn.danger{color:#e0917f;border-color:rgba(200,107,90,.4)}
+  .btn:disabled{opacity:.45;cursor:default}
+
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:11px 10px;border-bottom:1px solid rgba(244,238,228,.07);vertical-align:top}
+  th{font-size:11px;letter-spacing:.1em;color:var(--dim);font-weight:500;text-transform:uppercase}
+  td{font-size:13px;line-height:1.6}
+  tr.clickable{cursor:pointer}
+  tr.clickable:hover td{background:rgba(255,255,255,.035)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--dim)}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;border:1px solid var(--line)}
+  .pill.on{color:#a9c7a0;border-color:rgba(127,155,118,.45)}
+  .pill.off{color:var(--dim)}
+  .pill.admin{color:#dcb07f;border-color:rgba(193,129,73,.5)}
+  .pill.no{color:#e0917f;border-color:rgba(200,107,90,.4)}
+  .empty{color:var(--dim);padding:26px 4px;font-size:13px}
+  .err{color:#e0917f;font-size:12.5px;margin-top:10px;min-height:16px}
+
+  /* 대화 전문 */
+  .sheet{position:fixed;inset:0;z-index:40;background:rgba(10,8,6,.72);display:grid;place-items:center;padding:20px}
+  .sheet[hidden]{display:none}
+  .sheet-inner{width:min(760px,96vw);max-height:88vh;overflow-y:auto;border:1px solid var(--line);
+    border-radius:20px;background:#1b1712;padding:24px}
+  .turn{margin:0 0 14px;padding:12px 15px;border-radius:14px;line-height:1.7;font-size:13.5px;max-width:88%}
+  .turn.user{margin-left:auto;background:#eee5d8;color:#29231e}
+  .turn.assistant{background:rgba(244,238,228,.07);border:1px solid rgba(255,255,255,.07)}
+  .mv{font-size:11.5px;color:var(--dim);margin:-6px 0 14px;padding-left:4px}
+  .src-note{font-size:12px;line-height:1.7;border-radius:12px;padding:11px 14px;margin:0 0 18px}
+  .src-note.internal{border:1px solid rgba(200,107,90,.35);background:rgba(200,107,90,.08);color:#e0a595}
+  .src-note.consented{border:1px solid rgba(127,155,118,.35);background:rgba(127,155,118,.08);color:#a9c7a0}
+
+  /* 문 앞 (열쇠가 없을 때) */
+  .locked{max-width:460px;margin:16vh auto;text-align:center;padding:0 22px}
+  .locked h1{font-family:Georgia,serif;font-weight:400;font-size:30px;margin:0 0 14px}
+  .locked p{color:var(--dim);line-height:1.8;font-size:13.5px}
+</style>
+</head>
+<body>
+
+<div id="locked" class="locked" hidden>
+  <h1>이 문은 닫혀 있습니다.</h1>
+  <p>문 앞에서 문장을 들려주고 오셔야 합니다.<br /><a href="./index.html">서재 정문으로</a></p>
+</div>
+
+<div id="shell" hidden>
+<header>
+  <div class="brand">만리서재<small>관리실 · KEEPER</small></div>
+  <nav class="tabs">
+    <button class="tab on" data-tab="talks">대화 기록</button>
+    <button class="tab" data-tab="phrases">예약 문장</button>
+    <button class="tab" data-tab="uses">사용 로그</button>
+  </nav>
+  <button class="out" id="logout">열쇠 반납</button>
+</header>
+
+<main>
+  <!-- 대화 기록 -->
+  <section id="tab-talks">
+    <h2>대화 기록</h2>
+    <p class="sub">두 곳은 성격이 다릅니다. 섞어서 쓰지 않습니다.</p>
+    <div class="row" style="margin-bottom:16px">
+      <button class="btn small on" id="srcVisits">내부 보관 (visits)</button>
+      <button class="btn small" id="srcLogbook">동의된 기록 (logbook)</button>
+      <button class="btn small" id="reloadTalks">새로고침</button>
+    </div>
+    <div id="srcNote"></div>
+    <div class="panel"><div id="talksBox"><div class="empty">불러오는 중…</div></div></div>
+  </section>
+
+  <!-- 예약 문장 -->
+  <section id="tab-phrases" hidden>
+    <h2>예약 문장</h2>
+    <p class="sub">사람마다 다른 문장을 건넵니다. 어떤 건 1회권, 어떤 건 10회권.<br />
+      자리 문장은 문장이 <b>포함</b>되기만 하면 통과합니다("…에서 보고 왔어요"). 관리자 문장은 <b>완전히 같아야</b> 열립니다.</p>
+    <div id="weakWarn"></div>
+    <div class="panel">
+      <div class="row">
+        <div class="grow">
+          <label>문장 (비우면 서재가 하나 짓습니다)</label>
+          <input type="text" id="newPhrase" placeholder="예: 느린 창가에서 왔어요" style="width:100%" />
+        </div>
+        <div class="grow" style="min-width:150px">
+          <label>누구에게</label>
+          <input type="text" id="newLabel" placeholder="예: 인스타 신청자 3번" style="width:100%" />
+        </div>
+        <div>
+          <label>횟수</label>
+          <select id="newUses">
+            <option value="1">1회권</option>
+            <option value="5">5회권</option>
+            <option value="10" selected>10회권</option>
+            <option value="">무제한</option>
+          </select>
+        </div>
+        <div>
+          <label>종류</label>
+          <select id="newKind">
+            <option value="seat" selected>자리 (손님)</option>
+            <option value="admin">다른 문 (관리자)</option>
+          </select>
+        </div>
+        <button class="btn primary" id="makePhrase">만들기</button>
+      </div>
+      <div class="err" id="phraseErr"></div>
+    </div>
+    <div class="panel"><div id="phrasesBox"><div class="empty">불러오는 중…</div></div></div>
+  </section>
+
+  <!-- 사용 로그 -->
+  <section id="tab-uses" hidden>
+    <h2>사용 로그</h2>
+    <p class="sub">입장도 거절도 함께 남습니다. 거절이 쌓인 문장은 다 쓰였거나 기한이 지난 것입니다.<br />
+      문장을 지워도 이 로그는 남습니다.</p>
+    <div class="row" style="margin-bottom:16px">
+      <button class="btn small" id="reloadUses">새로고침</button>
+    </div>
+    <div class="panel"><div id="usesBox"><div class="empty">불러오는 중…</div></div></div>
+  </section>
+</main>
+</div>
+
+<div class="sheet" id="sheet" hidden><div class="sheet-inner" id="sheetInner"></div></div>
+
+<script>
+// 열쇠는 정문에서 문장을 들려주고 받는다. 이 페이지가 스스로 발급하지 않는다.
+// (페이지를 숨기는 것은 문이 아니다 — 판정은 서버 /api/admin/* 이 한다.)
+const KEY = sessionStorage.getItem('manri_keeper') || '';
+const shell = document.getElementById('shell');
+const locked = document.getElementById('locked');
+// 첫 그리기는 스크립트 맨 아래에서 부른다.
+// 여기서 부르면 아래쪽 const(srcNote 등)가 아직 초기화 전이라 조용히 멈춘다(TDZ).
+if(!KEY) locked.hidden=false; else shell.hidden=false;
+
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const when = s => { if(!s) return '—';
+  const d=new Date(s); if(isNaN(d)) return esc(s);
+  return d.toLocaleString('ko-KR',{timeZone:'Asia/Seoul',year:'2-digit',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); };
+
+async function api(path, opts={}){
+  const res = await fetch(path, {...opts, headers:{'authorization':'Bearer '+KEY,'content-type':'application/json',...(opts.headers||{})}});
+  let data=null; try{ data=await res.json(); }catch{}
+  if(res.status===401){ sessionStorage.removeItem('manri_keeper'); shell.hidden=true; locked.hidden=false;
+    throw new Error('열쇠가 만료되었습니다. 정문에서 다시 들려주세요.'); }
+  if(!res.ok) throw new Error((data&&data.error)||'요청이 실패했습니다.');
+  return data;
+}
+
+document.getElementById('logout').onclick=()=>{ sessionStorage.removeItem('manri_keeper'); location.href='./index.html'; };
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+  ['talks','phrases','uses'].forEach(n=>document.getElementById('tab-'+n).hidden = (n!==t.dataset.tab));
+  if(t.dataset.tab==='phrases') loadPhrases();
+  if(t.dataset.tab==='uses') loadUses();
+});
+
+// ── 대화 기록 ────────────────────────────────────────────────────────────────
+let source='visits';
+const srcNote=document.getElementById('srcNote');
+document.getElementById('srcVisits').onclick=()=>{source='visits';syncSrc();loadTalks()};
+document.getElementById('srcLogbook').onclick=()=>{source='logbook';syncSrc();loadTalks()};
+document.getElementById('reloadTalks').onclick=()=>loadTalks();
+function syncSrc(){
+  document.getElementById('srcVisits').classList.toggle('on',source==='visits');
+  document.getElementById('srcLogbook').classList.toggle('on',source==='logbook');
+}
+
+async function loadTalks(){
+  const box=document.getElementById('talksBox');
+  srcNote.innerHTML = source==='visits'
+    ? `<p class="src-note internal">내부 보관입니다. 앉았던 사람은 <b>남기겠다고 하지 않았습니다.</b>
+        엔진을 고치기 위해서만 봅니다 — 공개·인용·출판하지 않습니다.</p>`
+    : `<p class="src-note consented">앉았던 사람이 <b>직접 남기겠다고 누른</b> 대화입니다.
+        로그북은 여기에서만 뽑습니다.</p>`;
+  box.innerHTML='<div class="empty">불러오는 중…</div>';
+  try{
+    const d=await api('/api/admin/visits?source='+source+'&limit=200');
+    if(!d.visits.length){ box.innerHTML='<div class="empty">아직 없습니다.</div>'; return; }
+    box.innerHTML =
+      `<table><thead><tr>
+        <th>${source==='logbook'?'서재 번호':'앉은 때'}</th><th>자리</th><th>처음 질문</th>
+        <th>말수</th><th>이동</th><th>일어남</th><th>판본</th></tr></thead><tbody>`+
+      d.visits.map(v=>`<tr class="clickable" data-uuid="${esc(v.uuid)}">
+        <td>${source==='logbook'?`<b>${esc(v.label||'')}</b><div class="mono">${when(v.created_at)}</div>`:when(v.created_at)}</td>
+        <td>${esc(v.seat||'—')}</td>
+        <td>${esc((v.firstQuestion||'—').slice(0,40))}</td>
+        <td>${v.turn_count??'—'}</td>
+        <td>${v.movementCount??'—'}</td>
+        <td>${v.userEnded===true?'<span class="pill on">일어남</span>':v.userEnded===false?'<span class="pill off">그냥 나감</span>':'<span class="pill off">—</span>'}</td>
+        <td class="mono">${esc(v.genome_edition||'')} · ${esc(v.engine_version||'')}</td>
+      </tr>`).join('')+'</tbody></table>';
+    box.querySelectorAll('tr.clickable').forEach(tr=>tr.onclick=()=>openTalk(tr.dataset.uuid));
+  }catch(e){ box.innerHTML=`<div class="err">${esc(e.message)}</div>`; }
+}
+
+const sheet=document.getElementById('sheet');
+sheet.onclick=e=>{ if(e.target===sheet) sheet.hidden=true; };
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') sheet.hidden=true; });
+
+async function openTalk(uuid){
+  const inner=document.getElementById('sheetInner');
+  inner.innerHTML='<div class="empty">불러오는 중…</div>'; sheet.hidden=false;
+  try{
+    const d=await api('/api/admin/visits?source='+source+'&uuid='+uuid);
+    const v=d.visit;
+    const talk=JSON.parse(v.conversation_json||'[]');
+    const mv=v.movements_json?JSON.parse(v.movements_json):[];
+    const closing=v.closing_json?JSON.parse(v.closing_json):null;
+    const byTurn=Object.fromEntries(mv.map(m=>[m.turn,m]));
+
+    let html = source==='visits'
+      ? `<p class="src-note internal">내부 보관 — 공개·인용·출판하지 않습니다.</p>`
+      : `<p class="src-note consented">동의된 기록 ${esc(v.no?('· 만리서재 '+String(v.no).padStart(6,'0')):'')}</p>`;
+    html += `<p class="mono">${esc(v.uuid)} · ${esc(v.seat||'')} · ${when(v.created_at||v.visited_at)}</p>`;
+
+    talk.forEach((t,i)=>{
+      html += `<div class="turn ${t.role}">${esc(t.content)}</div>`;
+      const m=byTurn[i];
+      if(m) html += `<div class="mv">↳ ${esc(m.movement)} ${esc(m.name)} · ${esc((m.triggers||[]).join(', '))}`
+        + (m.subsequent_signals?` · 뒤이어 ${esc(m.subsequent_signals.join(', '))}`:'') + `</div>`;
+    });
+
+    if(closing){
+      html += `<div class="turn assistant" style="max-width:100%"><b>마무리</b><br />`
+        + `처음의 질문 — ${esc(closing.first_question||'')}<br />`
+        + `발견한 질문 — ${esc(closing.discovered_question||'')}<br />`
+        + `남긴 문장 — ${esc(closing.user_sentence||'')}<br />`
+        + `${esc(closing.farewell||'')}</div>`;
+    }
+    html += `<div style="margin-top:18px"><button class="btn small" onclick="document.getElementById('sheet').hidden=true">닫기</button></div>`;
+    inner.innerHTML=html;
+  }catch(e){ inner.innerHTML=`<div class="err">${esc(e.message)}</div>`; }
+}
+
+// ── 예약 문장 ────────────────────────────────────────────────────────────────
+document.getElementById('makePhrase').onclick=async ()=>{
+  const btn=document.getElementById('makePhrase'), err=document.getElementById('phraseErr');
+  const uses=document.getElementById('newUses').value;
+  btn.disabled=true; err.textContent='';
+  try{
+    await api('/api/admin/phrases',{method:'POST',body:JSON.stringify({
+      phrase:document.getElementById('newPhrase').value,
+      label:document.getElementById('newLabel').value,
+      maxUses: uses===''?null:Number(uses),
+      kind:document.getElementById('newKind').value
+    })});
+    document.getElementById('newPhrase').value='';
+    document.getElementById('newLabel').value='';
+    loadPhrases();
+  }catch(e){ err.textContent=e.message; }
+  btn.disabled=false;
+};
+
+async function loadPhrases(){
+  const box=document.getElementById('phrasesBox');
+  box.innerHTML='<div class="empty">불러오는 중…</div>';
+  try{
+    const d=await api('/api/admin/phrases');
+    // 관리자 문장이 서재 이름 그대로면, 손님이 실수로 두드릴 수 있다.
+    const weak=d.phrases.filter(p=>p.kind==='admin'&&p.active&&/^만리서재$/.test(p.phrase.replace(/\s+/g,'')));
+    document.getElementById('weakWarn').innerHTML = weak.length
+      ? `<div class="warn"><b>관리자 문장이 「만리서재」입니다.</b> 이 서재의 이름 그 자체라, 손님이 예약칸에 그대로 적을 수 있습니다.
+         완전일치로 걸어두어 "만리서재에서 왔어요"로는 열리지 않지만, 아무도 떠올리지 않을 문장으로 바꿔두시는 게 안전합니다.
+         <br />아래에서 새 관리자 문장을 먼저 만든 뒤, 이 문장을 지우면 됩니다.</div>` : '';
+
+    if(!d.phrases.length){ box.innerHTML='<div class="empty">아직 없습니다.</div>'; return; }
+    box.innerHTML='<table><thead><tr><th>문장</th><th>누구에게</th><th>쓴 횟수</th><th>마지막 사용</th><th>상태</th><th></th></tr></thead><tbody>'+
+      d.phrases.map(p=>{
+        // 무제한이어도 몇 번 쓰였는지는 보여준다 — 그게 로그에서 제일 궁금한 숫자다.
+        const left = p.max_uses===null ? `${p.used}회 <span class="mono">· 무제한</span>` : `${p.used} / ${p.max_uses}`;
+        const done = p.max_uses!==null && p.used>=p.max_uses;
+        return `<tr>
+          <td><b>${esc(p.phrase)}</b> ${p.kind==='admin'?'<span class="pill admin">다른 문</span>':''}
+              <div class="mono">${when(p.created_at)}에 만듦</div></td>
+          <td>${esc(p.label||'—')}</td>
+          <td>${left}${done?' <span class="pill no">소진</span>':''}</td>
+          <td class="mono">${when(p.last_used)}</td>
+          <td>${p.active?'<span class="pill on">열림</span>':'<span class="pill off">닫힘</span>'}</td>
+          <td style="white-space:nowrap">
+            <button class="btn small" data-copy="${esc(p.phrase)}">복사</button>
+            <button class="btn small" data-toggle="${p.id}" data-active="${p.active?0:1}">${p.active?'닫기':'열기'}</button>
+            <button class="btn small danger" data-del="${p.id}">삭제</button>
+          </td></tr>`;
+      }).join('')+'</tbody></table>';
+
+    box.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{
+      try{ await navigator.clipboard.writeText(b.dataset.copy); b.textContent='복사됨'; setTimeout(()=>b.textContent='복사',1200); }catch{}
+    });
+    box.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{
+      b.disabled=true;
+      try{ await api('/api/admin/phrases',{method:'PATCH',body:JSON.stringify({id:Number(b.dataset.toggle),active:b.dataset.active==='1'})}); loadPhrases(); }
+      catch(e){ alert(e.message); b.disabled=false; }
+    });
+    box.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+      if(!confirm('이 문장을 지웁니다. 사용 로그는 남습니다.')) return;
+      b.disabled=true;
+      try{ await api('/api/admin/phrases?id='+b.dataset.del,{method:'DELETE'}); loadPhrases(); }
+      catch(e){ alert(e.message); b.disabled=false; }
+    });
+  }catch(e){ box.innerHTML=`<div class="err">${esc(e.message)}</div>`; }
+}
+
+// ── 사용 로그 ────────────────────────────────────────────────────────────────
+document.getElementById('reloadUses').onclick=()=>loadUses();
+async function loadUses(){
+  const box=document.getElementById('usesBox');
+  box.innerHTML='<div class="empty">불러오는 중…</div>';
+  try{
+    const d=await api('/api/admin/uses?limit=300');
+    if(!d.uses.length){ box.innerHTML='<div class="empty">아직 없습니다.</div>'; return; }
+    box.innerHTML='<table><thead><tr><th>때</th><th>문장</th><th>실제로 한 말</th><th>자리</th><th>결과</th></tr></thead><tbody>'+
+      d.uses.map(u=>`<tr>
+        <td class="mono">${when(u.at)}</td>
+        <td>${esc(u.phrase)}${u.phrase_id===null?' <span class="pill off">지워진 문장</span>':''}</td>
+        <td>${esc((u.said||'').slice(0,50))}</td>
+        <td>${esc(u.seat||'—')}</td>
+        <td>${u.ok?'<span class="pill on">입장</span>':'<span class="pill no">거절</span>'}</td>
+      </tr>`).join('')+'</tbody></table>';
+  }catch(e){ box.innerHTML=`<div class="err">${esc(e.message)}</div>`; }
+}
+
+// 모든 선언이 끝난 뒤에 첫 그림을 그린다.
+if(KEY){ syncSrc(); loadTalks(); }
+</script>
+</body>
+</html>

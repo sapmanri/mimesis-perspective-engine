@@ -23,7 +23,8 @@
   button{cursor:pointer}
   #app{position:relative;width:100%;height:100%;isolation:isolate}
   /* 방은 또렷하게 보여주는 그림이 아니라, 뒤에 잠겨 있는 기억이다.
-     블러를 깊게 먹여 몽환적으로 둔다 — 가장자리가 비지 않도록 넉넉히 넘겨 깐다. */
+     블러로 몽환을 남기되, 방이 무엇인지는 알아볼 수 있는 선까지만 (28→16px).
+     가장자리가 비지 않도록 넉넉히 넘겨 깐다. */
   .room{
     position:absolute;inset:-12%;
     background-image:
@@ -32,7 +33,7 @@
     background-size:cover;background-position:center;
     transform:scale(1.08) translate3d(0,0,0);
     transition:transform 2.2s cubic-bezier(.18,.75,.18,1),filter 1.5s ease,background-position 2.2s ease;
-    filter:blur(28px) saturate(.82) contrast(1.02) brightness(.72);
+    filter:blur(16px) saturate(.85) contrast(1.02) brightness(.74);
     will-change:transform,filter,background-position;
   }
   .room::after{
@@ -44,8 +45,8 @@
       linear-gradient(90deg,rgba(0,0,0,.22),transparent 24%,transparent 76%,rgba(0,0,0,.28));
     mix-blend-mode:screen;pointer-events:none;
   }
-  /* 문을 열면 조금 걷힌다 — 그래도 또렷해지지는 않는다. */
-  .room.entered{filter:blur(20px) saturate(.92) contrast(1.03) brightness(1.05)}
+  /* 문을 열면 더 걷힌다 — 그래도 사진처럼 또렷해지지는 않는다. */
+  .room.entered{filter:blur(11px) saturate(.94) contrast(1.03) brightness(1.05)}
   .room.focus-fire{transform:scale(1.48) translate3d(20%,4%,0);background-position:10% 55%}
   .room.focus-desk{transform:scale(1.46) translate3d(0,7%,0);background-position:50% 45%}
   .room.focus-chair{transform:scale(1.5) translate3d(-18%,3%,0);background-position:90% 52%}
@@ -338,6 +339,14 @@ enterBtn.onclick=async ()=>{
     });
     let data=null; try{ data=await res.json(); }catch{ data=null; }
     if(!res.ok||!data){throw new Error((data&&data.error)||'서재와 연결되지 않았습니다. 잠시 후 다시 시도해 주세요.')}
+    // 어떤 문장은 세 자리가 아닌 다른 문을 연다. 열쇠는 서버가 준다.
+    if(data.door==='keeper'&&data.token){
+      sessionStorage.setItem('manri_keeper',data.token);
+      gateHint.textContent='';
+      status.textContent='ANOTHER DOOR';
+      setTimeout(()=>{location.href='./keeper.html'},700);
+      return;
+    }
     reserved=true;
     gateHint.textContent='';
     hide(gateScreen);

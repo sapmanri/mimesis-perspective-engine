@@ -1,10 +1,12 @@
 import { json, rateLimitKey, type Env } from "../_lib/common";
 import {
-  NOT_RESERVED_MESSAGE,
+  REFUSAL_MESSAGE,
   buildTicket,
+  issueKeeperSession,
   issuePass,
-  phraseAccepted,
+  logPhraseUse,
   randomSeat,
+  resolvePhrase,
 } from "../_lib/pass";
 import { SEATS } from "../_lib/visit";
 
@@ -38,9 +40,40 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   }
   await env.PENDING.put(rlKey, String(count + 1), { expirationTtl: 60 });
 
-  if (!phraseAccepted(phrase, env)) {
-    // 예약이 없는 분께 거짓말하지 않는다 — 예약제 규칙을 그대로 말한다.
-    return json({ error: NOT_RESERVED_MESSAGE }, 403);
+  const verdict = await resolvePhrase(env, phrase);
+
+  if (!verdict.ok) {
+    // 문장을 알아본 경우(소진·만료·중지)는 거절도 로그에 남긴다 — 나중에 봐야 하므로.
+    if (verdict.row) {
+      ctx.waitUntil(
+        logPhraseUse(env, {
+          phraseId: verdict.row.id,
+          phrase: verdict.row.phrase,
+          said: phrase.trim(),
+          uuid: null,
+          seat: null,
+          ok: false,
+        }),
+      );
+    }
+    // 예약이 없는 분께 거짓말하지 않는다 — 사정을 그대로 말한다.
+    return json({ error: REFUSAL_MESSAGE[verdict.reason] ?? REFUSAL_MESSAGE.no_match }, 403);
+  }
+
+  // 세 자리가 아닌 다른 문. 문장이 열쇠를 발급한다 — 페이지만 숨기는 게 아니다.
+  if (verdict.row?.kind === "admin") {
+    const token = await issueKeeperSession(env, verdict.row.id);
+    ctx.waitUntil(
+      logPhraseUse(env, {
+        phraseId: verdict.row.id,
+        phrase: verdict.row.phrase,
+        said: phrase.trim(),
+        uuid: null,
+        seat: "(다른 문)",
+        ok: true,
+      }),
+    );
+    return json({ door: "keeper", token });
   }
 
   // 예약 확인됨. 자리는 서재가 정한다(현재는 무작위 배정 — 예약 시스템 연결 전까지).
@@ -49,6 +82,18 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   // 티켓에 '그때의 서재'를 통째로 찍는다 — 판본이 올라가도 이 예약을 다시 읽을 수 있게.
   const ticket = buildTicket(env, seat, phrase.trim());
   await issuePass(env, uuid, ticket);
+
+  // 사용 로그는 입장을 막지 않는다. 티켓은 이미 발급됐다.
+  ctx.waitUntil(
+    logPhraseUse(env, {
+      phraseId: verdict.row?.id ?? null,
+      phrase: verdict.row?.phrase ?? "(비상 만능열쇠)",
+      said: phrase.trim(),
+      uuid,
+      seat,
+      ok: true,
+    }),
+  );
 
   return json({ uuid, seat, seatContext: SEATS[seat] });
 };
