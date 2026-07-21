@@ -116,8 +116,22 @@
   .msg.user{align-self:flex-end;background:#eee5d8;color:#29231e}
   .msg.sys{align-self:flex-start;max-width:100%;background:none;border:none;padding:2px 4px;
     font-size:13px;color:#bda996;font-style:italic}
+  /* 마무리 — 대화가 아니라 오늘 남는 한 장. 말풍선과 구별되어야 한다. */
+  .closing-paper{align-self:stretch;margin-top:10px;padding:26px 26px 22px;border-radius:20px;
+    border:1px solid rgba(244,238,228,.16);background:rgba(244,238,228,.05);
+    animation:rise .6s ease both}
+  .closing-head{margin:0 0 6px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:#bda996;opacity:.85}
+  .closing-body{margin:0 0 20px;font-family:Georgia,"Times New Roman",serif;font-size:17px;
+    line-height:1.7;color:#f2e9dc}
+  .closing-farewell{margin:22px 0 0;padding-top:18px;border-top:1px solid rgba(244,238,228,.12);
+    font-size:15px;line-height:1.75;color:#e2d7c9}
+  .closing-sign{margin:14px 0 0;font-size:12px;letter-spacing:.1em;color:#a8998a;text-align:right}
   @keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
   .composer{flex:none;display:flex;gap:10px;margin-top:14px}
+  /* display:flex가 hidden 속성을 덮어써서, 일어난 뒤에도 입력칸이 남아 있었다.
+     (그 상태로 적으면 closed 때문에 아무 반응 없이 먹힌다.) */
+  .composer[hidden]{display:none}
   .composer textarea{flex:1;resize:none;min-height:54px;max-height:130px;border-radius:17px;border:1px solid var(--line);
     background:rgba(0,0,0,.22);color:#fff;padding:15px;outline:none;line-height:1.5}
   .composer button{width:54px;border:none;border-radius:17px;background:#eee5d8;color:#29231e;font-weight:700}
@@ -364,6 +378,28 @@ function scrollToLatest(){
 }
 function addMsg(cls,text){const d=document.createElement('div');d.className='msg '+cls;d.textContent=text;msgBox.appendChild(d);scrollToLatest();return d}
 function addGuide(text){return addMsg('guide',text)}
+
+// 자리에서 일어날 때 남는 한 장. 결론이 아니라 오늘의 변화를 적는다.
+function addClosing(c){
+  const box=document.createElement('div');
+  box.className='closing-paper';
+  const part=(head,body)=>{
+    if(!body)return;
+    const h=document.createElement('p');h.className='closing-head';h.textContent=head;
+    const b=document.createElement('p');b.className='closing-body';b.textContent=String(body);
+    box.appendChild(h);box.appendChild(b);
+  };
+  part('오늘 처음의 질문',c.first_question);
+  part('오늘 새롭게 발견한 질문',c.discovered_question);
+  part('오늘 당신이 남긴 문장',c.user_sentence);
+  if(c.farewell){
+    const f=document.createElement('p');f.className='closing-farewell';f.textContent=String(c.farewell);
+    box.appendChild(f);
+  }
+  const sig=document.createElement('p');sig.className='closing-sign';sig.textContent='— 만리서재';
+  box.appendChild(sig);
+  msgBox.appendChild(box);scrollToLatest();
+}
 function addUser(text){return addMsg('user',text)}
 
 // 적은 말 → 관점 엔진. 이 함수는 질문을 만들지 않는다. 실패하면 오류를 보이고 멈춘다.
@@ -433,8 +469,9 @@ riseSeat.onclick=async ()=>{
     const c=data.closing||{};
     waiting.remove();
     composerBox.hidden=true;closed=true;
-    [c.first_question,c.discovered_question,c.user_sentence,c.farewell]
-      .filter(Boolean).forEach(line=>addGuide(String(line)));
+    // 마무리는 대화가 아니다 — 라벨 있는 한 장으로 남긴다.
+    // (라벨 없이 네 문장을 말풍선으로 쏟으면 서재가 옛말을 되뇌는 것처럼 보인다.)
+    addClosing(c);
     riseSeat.textContent='서재를 나서기';
   }catch(err){
     // 막다른 길을 만들지 않는다: 같은 버튼을 다시 누르면 그냥 나가게 바꾼다.
