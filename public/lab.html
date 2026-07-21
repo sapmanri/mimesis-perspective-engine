@@ -340,11 +340,17 @@ document.getElementById('tourBtn').onclick=()=>{
   reserved=false; hide(modeScreen); hotspots.classList.add('active'); show(tourPanel); status.textContent='FREE TOUR · NO SESSION';
 };
 document.getElementById('reserveBtn').onclick=()=>{
-  // 칸을 비우고 연다. 예약 문장은 남의 것이므로 다음 사람에게 보이면 안 된다
-  // (autocomplete=off를 브라우저가 무시하는 경우가 있다).
   hide(modeScreen);show(gateScreen);gateHint.textContent='';phraseInput.value='';
   setTimeout(()=>phraseInput.focus(),300);
 };
+// 예약 문장은 남이 받은 물건이라 다음 사람 화면에 남으면 안 된다.
+// autocomplete="off"는 브라우저가 무시하고, 새로고침·뒤로가기 때 값을 되살린다.
+// 복원은 pageshow 직전에 끝나므로, 되살아난 값을 여기서 다시 지운다.
+// (되살아나는 시점이 브라우저마다 달라, 한 박자 뒤에 한 번 더 지운다.)
+addEventListener('pageshow',()=>{
+  phraseInput.value='';
+  setTimeout(()=>{phraseInput.value=''},0);
+});
 document.getElementById('gateBack').onclick=()=>{hide(gateScreen);show(modeScreen)};
 
 // 문턱 — 문장 판정은 서버(/api/enter)가 한다. 이 파일에는 문장이 없다.
@@ -489,7 +495,7 @@ function closingChoices(c){
 
   const saveToDisk=(blob)=>{
     const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download='만리서재.png';
+    const a=document.createElement('a');a.href=url;a.download='manri-library.jpg';
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),4000);
   };
@@ -509,9 +515,9 @@ function closingChoices(c){
     note.textContent='한 장으로 만드는 중입니다…';
     try{
       const blob=await renderKeepsake({talk:held.talk,closing:c,seatTitle:held.seatTitle,label});
-      const file=new File([blob],'만리서재.png',{type:'image/png'});
+      const file=new File([blob],'manri-library.jpg',{type:'image/jpeg'});
       if(navigator.canShare&&navigator.canShare({files:[file]})){
-        try{ await navigator.share({files:[file],title:'만리서재'}); note.textContent=''; }
+        try{ await navigator.share({files:[file]}); note.textContent=''; }
         catch(e){ if(!e||e.name!=='AbortError')throw e; note.textContent=''; }
         offerDownload(blob); // 시트에 원하는 앱이 없을 수도 있다
       }else{
@@ -677,7 +683,9 @@ async function renderKeepsake({talk,closing,seatTitle,label}){
     b.lines.forEach((ln,i)=>ctx.fillText(ln,x+28,b.y+22+i*b.size*1.62));
   }
 
-  return await new Promise((res,rej)=>cv.toBlob(v=>v?res(v):rej(new Error('no blob')),'image/png'));
+  // JPEG로 낸다. PNG(5MB)로 내보냈을 때는 macOS 공유 시트에 사진 앱이 뜨지 않았다.
+  // byeoli-postcard가 쓰는 조합(image/jpeg 0.92 + ASCII 파일명)이 사진 앱을 띄운다.
+  return await new Promise((res,rej)=>cv.toBlob(v=>v?res(v):rej(new Error('no blob')),'image/jpeg',0.92));
 }
 
 function addUser(text){return addMsg('user',text)}
