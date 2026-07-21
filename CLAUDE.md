@@ -22,6 +22,7 @@
 
 ## 절대 원칙 (전부 Vase 판정으로 확정된 것)
 - **프롬프트는 창작물이 아니라 파생물** — 사슬: **Conversation Bible → `docs/CLAUDE_SYSTEM_PROMPT_V1.md` → `functions/_lib/prompt.ts`**. 이동 문법(T0~T10)·관찰 신호(trigger)의 **정본은 `docs/manri-conversation-bible/question-transition.md`의 "기계 판독 정본" 절**이며, 프롬프트의 이동 구역과 `functions/_lib/movements.ts`가 거기서 자동 생성된다. 프롬프트·movements.ts를 손으로 고치지 않는다: `node scripts/verify-prompt.mjs --write`. 게이트: `npm run verify` (사슬 전체 검증, 배포 전 필수).
+- **예약 문장은 사람마다 다르다** — 정본은 `phrases` 테이블(1회권·10회권·무제한). 쓴 횟수는 `phrase_uses`에서 센다(카운터 별도 보관 금지 — 어긋난다). 문장을 지워도 로그는 남는다. **자리 문장은 부분일치, 관리자 문장은 완전일치** — 관리자 문장이 부분일치면 평범한 인사가 관리실을 연다.
 - **예약 문장은 UI가 아니라 열쇠** — `/api/enter`가 서버에서 판정하고 티켓(uuid+좌석+판본)을 발급한다. `/api/ask`·`/api/close`는 티켓 없으면 403. 크레딧이 나가는 경로는 전부 티켓 뒤에 있다.
 - **이동은 선택이지 라벨이 아니다** — 엔진이 옮기기 전에 T코드를 고르고, `{reply, movement}` 구조화 출력으로 분리해 받는다. **이동 코드·이름·신호는 사용자에게 절대 나가지 않는다**(보이면 공략집이 된다). 기록은 `visits.movements_json`.
 - **효과는 판정하지 않고 관찰한다** — 이동 뒤 사용자의 말에서 변화 신호(`new_object`·`new_protected_value`·`abstract_to_scene`·`own_criterion`·`first_person_reframe`)만 관찰해 **직전 이동에 시간순으로 되붙인다**(`subsequent_signals`+`observed_at_turn`). **`success`는 저장하지 않는다** — 효과는 운영 분석에서 센다(예: `SELECT ... json_each(movements_json)`로 "T4 선택 중 후속 new_protected_value 비율"). 엔진이 사람을 평가하는 순간 판정 기계가 된다.
@@ -37,10 +38,11 @@
 
 ## 서비스 (배포됨)
 - **https://manri-library.pages.dev** — Cloudflare Pages `manri-library`
-- 인프라: D1 `manri-library-archive` (records=관점엔진 Q&A / visits=내부 전용 / **logbook=동의된 기록**), KV `PENDING`(임시·rate limit), 시크릿 ANTHROPIC_API_KEY·ADMIN_TOKEN 설정 완료
+- 인프라: D1 `manri-library-archive` (records=관점엔진 Q&A / visits=내부 전용 / **logbook=동의된 기록** / **phrases·phrase_uses=예약 문장과 사용 로그**), KV `PENDING`(임시·rate limit·티켓·관리자 세션), 시크릿 ANTHROPIC_API_KEY·ADMIN_TOKEN 설정 완료
+- **관리실 `/keeper.html`** — 대화 기록(visits·logbook 분리 표시) · 예약 문장(1회권/10회권/무제한, 닫기·삭제) · 사용 로그. 정문에서 관리자 문장을 들려주면 2시간짜리 열쇠를 받아 들어간다.
 - 배포: `npm run verify && npx wrangler pages deploy public --project-name manri-library --commit-dirty=true`
 - 모델: claude-opus-4-8, adaptive thinking, 시스템 프롬프트 cache_control
-- API: POST `/api/enter`(예약 문장 판정·티켓 발급) · POST `/api/ask`(대화 턴, 무상태 — 이력은 클라이언트) · POST `/api/close`(일어나기, structured output) · POST `/api/consent`(기록으로 남기기/철회 — 모델 호출 0회) · GET `/api/admin/list`(Bearer)
+- API: POST `/api/enter`(예약 문장 판정·티켓 발급) · POST `/api/ask`(대화 턴, 무상태 — 이력은 클라이언트) · POST `/api/close`(일어나기, structured output) · POST `/api/consent`(기록으로 남기기/철회 — 모델 호출 0회) · `/api/admin/{list,visits,phrases,uses}`(Bearer: ADMIN_TOKEN 또는 관리자 문장으로 받은 2시간 세션 열쇠)
 
 ## 함정 (실경험)
 - CC 브라우저 패널은 rAF 스로틀 — 전환·애니메이션이 얼어 보임(로직은 정상). 전환 체감은 **실기기 QA**.
