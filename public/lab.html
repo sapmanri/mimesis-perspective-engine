@@ -173,7 +173,30 @@
   .footer-note{position:absolute;bottom:16px;left:20px;z-index:12;font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.46)}
   .fade-text{animation:fadeText 1.2s ease both}
   @keyframes fadeText{from{opacity:0;filter:blur(4px)}to{opacity:1;filter:none}}
+  /* 방이 저무는 안내 옆에 붙는 마무리 길. 손이 닿는 자리에 둔다. */
+  .notice-act{margin-top:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);
+    color:#c9bcab;padding:8px 15px;border-radius:999px;font:inherit;font-size:12.5px;
+    font-style:normal;cursor:pointer}
+  .notice-act:hover{background:rgba(255,255,255,.13);color:var(--paper)}
+
   @media(max-width:720px){
+    /* 키보드가 올라오면 '보이는 높이'만 줄고 문서 높이는 그대로다.
+       그래서 대화창 윗부분(자리에서 일어나기)이 화면 밖으로 밀려 아무도 찾지 못했다.
+       visualViewport가 알려주는 실제 보이는 영역에 창을 못 박는다. */
+    .seat-panel{
+      position:fixed;inset:auto;left:0;right:0;
+      top:var(--vvt,0px);height:var(--vvh,100dvh);
+      padding:0;place-items:stretch;
+    }
+    .dialog{width:100%;height:100%;max-height:none;border:none;border-radius:0;padding:12px 14px}
+    .seat-head{padding-bottom:12px}
+    .seat-head h3{font-size:20px}
+    .seat-sub{display:none}   /* 좁은 화면에서는 자리 설명보다 대화가 먼저다 */
+    .messages{padding:12px 0 4px;gap:11px}
+    .msg{max-width:88%;font-size:14.5px}
+    .composer{margin-top:10px}
+    .composer textarea{min-height:46px;padding:12px 14px}
+    .closing-paper{padding:20px 18px 18px}
     .topbar{padding:16px}.status{display:none}.spot{width:68px;height:68px}.spot::after{top:78px;font-size:10px}
     .spot.fire{left:8%;top:54%}.spot.desk{left:45%;top:52%}.spot.chair{right:7%;top:54%}
     .card{padding:30px 22px}.room.focus-fire{transform:scale(1.6) translate3d(22%,3%,0)}
@@ -699,6 +722,21 @@ async function renderKeepsake({talk,closing,seatTitle,label}){
 
 function addUser(text){return addMsg('user',text)}
 
+// 모바일에서 키보드가 올라오면 보이는 높이가 줄어든다. 그 높이를 CSS에 알려준다.
+// (이게 없으면 대화창 위쪽이 화면 밖으로 밀려 '자리에서 일어나기'가 사라진다.)
+const vv=window.visualViewport;
+if(vv){
+  const syncViewport=()=>{
+    const r=document.documentElement.style;
+    r.setProperty('--vvh',vv.height+'px');
+    r.setProperty('--vvt',vv.offsetTop+'px');
+    scrollToLatest();
+  };
+  vv.addEventListener('resize',syncViewport);
+  vv.addEventListener('scroll',syncViewport);
+  syncViewport();
+}
+
 // ── 저녁이 깊어진다 ─────────────────────────────────────────────────────────
 // 자리에 끝이 없으면 수다가 된다. 그래서 한 저녁의 길이가 있다.
 // 남은 횟수는 서버가 세고, 여기서는 그것을 '빛이 빠지는 것'으로만 보여준다.
@@ -724,7 +762,13 @@ function setEvening(ev){
   // 한 번만 알린다. 매번 말하면 재촉이 된다.
   if(ev.warn&&ev.remaining>0&&!duskWarned){
     duskWarned=true;
-    addNotice('창의 빛이 얼마 남지 않았습니다. 여기서 마무리하셔도 됩니다.');
+    const n=addNotice('창의 빛이 얼마 남지 않았습니다. 여기서 마무리하셔도 됩니다.');
+    // 마무리 길을 여기에도 둔다 — 위쪽 헤더까지 올라가서 누를 사람은 많지 않다.
+    const b=document.createElement('button');b.className='notice-act';
+    b.textContent='여기서 마무리하기';
+    b.onclick=()=>{ if(!closed&&!busy) riseSeat.click(); };
+    n.appendChild(document.createElement('br'));n.appendChild(b);
+    scrollToLatest();
   }
 }
 
