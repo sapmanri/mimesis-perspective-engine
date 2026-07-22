@@ -85,6 +85,45 @@
   .src-note.internal{border:1px solid rgba(200,107,90,.35);background:rgba(200,107,90,.08);color:#e0a595}
   .src-note.consented{border:1px solid rgba(127,155,118,.35);background:rgba(127,155,118,.08);color:#a9c7a0}
 
+  /* ── 좁은 화면 ──────────────────────────────────────────────────────────
+     표를 그대로 두면 칸이 세로로 짓눌려 글자가 한 자씩 끊긴다.
+     좁은 화면에서는 한 줄을 한 장의 카드로 펼치고, 칸 이름을 왼쪽에 붙인다. */
+  @media(max-width:760px){
+    header{flex-wrap:wrap;gap:10px;padding:12px 14px}
+    .brand{flex:1 1 auto;font-size:12px}
+    .out{flex:0 0 auto;white-space:nowrap}
+    /* 탭은 줄바꿈 대신 옆으로 민다 — 두 줄로 접히면 머리가 화면을 다 먹는다. */
+    .tabs{order:3;width:100%;flex-wrap:nowrap;overflow-x:auto;gap:6px;
+      scrollbar-width:none;-webkit-overflow-scrolling:touch}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab{white-space:nowrap;flex:0 0 auto}
+
+    main{padding:16px 14px}
+    h2{font-size:20px}
+    .panel{padding:12px;border-radius:14px}
+
+    table,tbody,tr,td{display:block;width:100%}
+    thead{display:none}
+    tr{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+    tr.clickable:hover td{background:none}
+    td{border:0;padding:5px 0;display:flex;gap:12px;align-items:baseline;font-size:13.5px}
+    td::before{content:attr(data-l);flex:0 0 76px;font-size:11px;letter-spacing:.06em;
+      color:var(--dim);line-height:1.7}
+    td.acts{display:flex;gap:8px;flex-wrap:wrap;padding-top:10px}
+    td.acts::before{display:none}
+
+    /* 만들기 칸도 한 줄에 하나씩 */
+    .row{flex-direction:column;align-items:stretch}
+    .row>div,.grow{width:100%;min-width:0}
+    .row select,.row .btn{width:100%}
+    #tab-talks .row{flex-direction:row;flex-wrap:wrap}
+    #tab-talks .row .btn{width:auto}
+
+    .sheet{padding:0}
+    .sheet-inner{width:100%;max-height:100dvh;height:100dvh;border-radius:0;border:0;padding:18px 16px}
+    .turn{max-width:94%}
+  }
+
   /* 문 앞 (열쇠가 없을 때) */
   .locked{max-width:460px;margin:16vh auto;text-align:center;padding:0 22px}
   .locked h1{font-family:Georgia,serif;font-weight:400;font-size:30px;margin:0 0 14px}
@@ -237,13 +276,13 @@ async function loadTalks(){
         <th>${source==='logbook'?'서재 번호':'앉은 때'}</th><th>자리</th><th>처음 질문</th>
         <th>말수</th><th>이동</th><th>일어남</th><th>판본</th></tr></thead><tbody>`+
       d.visits.map(v=>`<tr class="clickable" data-uuid="${esc(v.uuid)}">
-        <td>${source==='logbook'?`<b>${esc(v.label||'')}</b><div class="mono">${when(v.created_at)}</div>`:when(v.created_at)}</td>
-        <td>${esc(v.seat||'—')}</td>
-        <td>${esc((v.firstQuestion||'—').slice(0,40))}</td>
-        <td>${v.turn_count??'—'}</td>
-        <td>${v.movementCount??'—'}</td>
-        <td>${v.userEnded===true?'<span class="pill on">일어남</span>':v.userEnded===false?'<span class="pill off">그냥 나감</span>':'<span class="pill off">—</span>'}</td>
-        <td class="mono">${esc(v.genome_edition||'')} · ${esc(v.engine_version||'')}</td>
+        <td data-l="${source==='logbook'?'서재 번호':'앉은 때'}"><div>${source==='logbook'?`<b>${esc(v.label||'')}</b><div class="mono">${when(v.created_at)}</div>`:when(v.created_at)}</div></td>
+        <td data-l="자리">${esc(v.seat||'—')}</td>
+        <td data-l="처음 질문">${esc((v.firstQuestion||'—').slice(0,40))}</td>
+        <td data-l="말수">${v.turn_count??'—'}</td>
+        <td data-l="이동">${v.movementCount??'—'}</td>
+        <td data-l="일어남">${v.userEnded===true?'<span class="pill on">일어남</span>':v.userEnded===false?'<span class="pill off">그냥 나감</span>':'<span class="pill off">—</span>'}</td>
+        <td data-l="판본" class="mono">${esc(v.genome_edition||'')} · ${esc(v.engine_version||'')}</td>
       </tr>`).join('')+'</tbody></table>';
     box.querySelectorAll('tr.clickable').forEach(tr=>tr.onclick=()=>openTalk(tr.dataset.uuid));
   }catch(e){ box.innerHTML=`<div class="err">${esc(e.message)}</div>`; }
@@ -326,13 +365,13 @@ async function loadPhrases(){
         const left = p.max_uses===null ? `${p.used}회 <span class="mono">· 무제한</span>` : `${p.used} / ${p.max_uses}`;
         const done = p.max_uses!==null && p.used>=p.max_uses;
         return `<tr>
-          <td><b>${esc(p.phrase)}</b> ${p.kind==='admin'?'<span class="pill admin">다른 문</span>':''}
-              <div class="mono">${when(p.created_at)}에 만듦</div></td>
-          <td>${esc(p.label||'—')}</td>
-          <td>${left}${done?' <span class="pill no">소진</span>':''}</td>
-          <td class="mono">${when(p.last_used)}</td>
-          <td>${p.active?'<span class="pill on">열림</span>':'<span class="pill off">닫힘</span>'}</td>
-          <td style="white-space:nowrap">
+          <td data-l="문장"><div><b>${esc(p.phrase)}</b> ${p.kind==='admin'?'<span class="pill admin">다른 문</span>':''}
+              <div class="mono">${when(p.created_at)}에 만듦</div></div></td>
+          <td data-l="누구에게">${esc(p.label||'—')}</td>
+          <td data-l="쓴 횟수">${left}${done?' <span class="pill no">소진</span>':''}</td>
+          <td data-l="마지막" class="mono">${when(p.last_used)}</td>
+          <td data-l="상태">${p.active?'<span class="pill on">열림</span>':'<span class="pill off">닫힘</span>'}</td>
+          <td data-l="" class="acts" style="white-space:nowrap">
             <button class="btn small" data-copy="${esc(p.phrase)}">복사</button>
             <button class="btn small" data-toggle="${p.id}" data-active="${p.active?0:1}">${p.active?'닫기':'열기'}</button>
             <button class="btn small danger" data-del="${p.id}">삭제</button>
@@ -366,11 +405,11 @@ async function loadUses(){
     if(!d.uses.length){ box.innerHTML='<div class="empty">아직 없습니다.</div>'; return; }
     box.innerHTML='<table><thead><tr><th>때</th><th>문장</th><th>실제로 한 말</th><th>자리</th><th>결과</th></tr></thead><tbody>'+
       d.uses.map(u=>`<tr>
-        <td class="mono">${when(u.at)}</td>
-        <td>${esc(u.phrase)}${u.phrase_id===null?' <span class="pill off">지워진 문장</span>':''}</td>
-        <td>${esc((u.said||'').slice(0,50))}</td>
-        <td>${esc(u.seat||'—')}</td>
-        <td>${u.ok?'<span class="pill on">입장</span>':'<span class="pill no">거절</span>'}</td>
+        <td data-l="때" class="mono">${when(u.at)}</td>
+        <td data-l="문장"><div>${esc(u.phrase)}${u.phrase_id===null?' <span class="pill off">지워진 문장</span>':''}</div></td>
+        <td data-l="한 말">${esc((u.said||'').slice(0,50))}</td>
+        <td data-l="자리">${esc(u.seat||'—')}</td>
+        <td data-l="결과">${u.ok?'<span class="pill on">입장</span>':'<span class="pill no">거절</span>'}</td>
       </tr>`).join('')+'</tbody></table>';
   }catch(e){ box.innerHTML=`<div class="err">${esc(e.message)}</div>`; }
 }
