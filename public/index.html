@@ -441,7 +441,7 @@ function openSeat(key,issuedUuid){
   currentSeat=key;
   seatToken+=1; // 이 앉음의 표. 앞선 자리의 늦은 인사를 막는다.
   uuid=issuedUuid;messages=[];busy=false;closed=false;riseFailed=false;
-  duskWarned=false;document.getElementById('app').style.setProperty('--dusk','0');
+  duskWarned=false;farewellOffered=false;document.getElementById('app').style.setProperty('--dusk','0');
   composerBox.hidden=false;answer.placeholder='오래 붙들고 있었지만 어디서부터 풀어야 할지 모르는 질문이 있나요?';
   riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   room.className='room entered focus-'+key;
@@ -786,6 +786,21 @@ async function nightfall(){
   riseSeat.click(); // 이미 있는 마무리 길을 그대로 쓴다
 }
 
+// 끝내려는 말. 엔진은 이제 작별하지 않으므로(마무리는 별도 자리의 일),
+// 그 말을 알아듣고 진짜 마무리 길을 내주는 건 이 자리의 몫이다.
+const FAREWELL = /^\s*(끝|그만|안녕|잘가|바이|종료|이만|여기까지|나갈게|나갈래|가야|고마워|감사)/;
+let farewellOffered = false;
+function offerClosing(text){
+  if(farewellOffered||closed||!FAREWELL.test(text))return;
+  farewellOffered = true;
+  const n=addNotice('자리에서 일어나시면 오늘 나눈 이야기를 한 장으로 정리해 드립니다.');
+  const b=document.createElement('button');b.className='notice-act';
+  b.textContent='자리에서 일어나기';
+  b.onclick=()=>{ if(!closed&&!busy) riseSeat.click(); };
+  n.appendChild(document.createElement('br'));n.appendChild(b);
+  scrollToLatest();
+}
+
 // 적은 말 → 관점 엔진. 이 함수는 질문을 만들지 않는다. 실패하면 오류를 보이고 멈춘다.
 async function send(){
   if(busy||closed)return;
@@ -813,6 +828,7 @@ async function send(){
       .forEach(p=>addGuide(p.replace(/\n/g,' ').trim()));
     setEvening(data.evening);
     if(data.evening&&data.evening.remaining<=0){ nightfall(); return; }
+    offerClosing(text);
   }catch(err){
     // 질문을 지어내지 않는다. 방금 적은 말은 이력·화면에서 함께 되돌리고,
     // 적었던 문장은 입력칸으로 돌려준다(다시 치게 만들지 않는다).
@@ -840,7 +856,7 @@ function leaveSeat(){
   footerNote.hidden=false;
   seatToken+=1; // 떠난 자리의 늦은 인사를 무효로 만든다.
   uuid=null;messages=[];busy=false;closed=false;riseFailed=false;
-  duskWarned=false;document.getElementById('app').style.setProperty('--dusk','0');
+  duskWarned=false;farewellOffered=false;document.getElementById('app').style.setProperty('--dusk','0');
   composerBox.hidden=false;
   riseSeat.disabled=false;riseSeat.textContent='자리에서 일어나기';
   if(reserved){show(modeScreen)}else{hotspots.classList.add('active');show(tourPanel)}

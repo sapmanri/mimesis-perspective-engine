@@ -120,6 +120,20 @@ function rebuildHistory(messages: Turn[], prior: MovementLog[]): Anthropic.Messa
 const EVENING_SPOKEN = 14; // 한 저녁에 주고받는 횟수
 const DUSK_WARNING = 3;    // 몇 번 남았을 때부터 모아가기 시작하는가
 
+// 이 호출은 '대화 턴'이다. 프롬프트의 마무리 모드는 /api/close에서만 쓴다.
+// 그런데 마무리 모드 절이 모든 호출에 실려 있어서, 사용자가 "끝"·"안녕"이라고만 적어도
+// 모델이 그걸 '자리에서 일어남'으로 읽고 대화 턴에서 마무리를 해버렸다
+// (실사용 2026-07-22: "- 오늘 처음의 질문: …" 목록 서식까지 그대로 흉내냈다).
+// 그러면 사용자는 끝난 줄 알고 일어나기를 누르지 않아, 마무리 카드도 한 장도 받지 못한다.
+// 프롬프트는 정본 사슬이라 손대지 않고, 어느 모드인지 여기서 분명히 말한다.
+const TURN_MODE_NOTE =
+  "이 호출은 대화 턴이다. 마무리 모드가 아니다. 사용자가 '끝'·'안녕'·'그만'이라고 적어도 " +
+  "마무리 모드를 실행하지 않는다. 오늘을 요약하지 않고, 처음의 질문·발견한 질문·남긴 문장을 " +
+  "목록으로 정리하지 않으며, 작별 인사를 하지 않는다. " +
+  "마무리는 사용자가 자리에서 일어날 때 별도의 자리에서 이루어진다.\n" +
+  "공간의 상태를 묘사하지 않는다 — 불·창·빛·저녁이 어떻게 되어가는지 말하지 않는다. " +
+  "좌석 맥락은 표현의 온도에만 쓴다.";
+
 // 남은 자리가 얼마 없을 때. 새 영역을 열지 말고 지금까지 나온 것을 모으게 한다.
 // (T10 되돌아보기가 정본의 종착 문법이지만, 코드를 여기 적지 않는다 —
 //  이동 목록은 Conversation Bible에서 생성된 프롬프트가 이미 갖고 있다.)
@@ -205,6 +219,7 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
           role: "system",
           content:
             (priorMovements.length ? MOVEMENT_REMINDER : MOVEMENT_REMINDER_FIRST) +
+            "\n" + TURN_MODE_NOTE +
             (remaining <= DUSK_WARNING ? "\n" + CONVERGE_NOTE : ""),
         },
       ],
