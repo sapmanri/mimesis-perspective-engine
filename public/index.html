@@ -103,7 +103,9 @@
   .tour-panel{place-items:end center;padding-bottom:34px;pointer-events:none}
   .tour-copy{pointer-events:auto;width:min(680px,92vw);display:flex;align-items:center;justify-content:space-between;gap:16px;
     padding:16px 20px;border-radius:20px;background:var(--glass);backdrop-filter:blur(14px);border:1px solid var(--line)}
-  .tour-copy p{margin:0;font-size:14px;color:#e8dfd4}
+  .tour-copy p{margin:0;font-size:14px;color:#e8dfd4;line-height:1.7}
+  /* 안내가 길어져도 나가는 길은 한 줄로 남는다. */
+  .tour-copy .btn{flex:none;white-space:nowrap}
   .seat-panel{place-items:end center;padding-bottom:22px}
   /* 헤더(나가는 길)와 입력칸은 고정, 대화만 스크롤된다.
      예전엔 .dialog 전체가 스크롤돼서 대화가 길어지면 나가기 버튼이 위로 사라졌다. */
@@ -237,7 +239,7 @@
 
   <section id="tourPanel" class="tour-panel hidden">
     <div class="tour-copy">
-      <p>세 자리는 벽이 아니라 서로 다른 빛으로 나뉩니다. 마음이 머무는 곳을 눌러보세요.</p>
+      <p id="tourText">세 자리는 벽이 아니라 서로 다른 빛으로 나뉩니다. 마음이 머무는 곳을 눌러보세요.</p>
       <button class="btn" id="tourExit">나가기</button>
     </div>
   </section>
@@ -389,15 +391,22 @@ enterBtn.onclick=async ()=>{
     enterBtn.disabled=false;
   }
 };
+const tourText=document.getElementById('tourText');
+const TOUR_INTRO='세 자리는 벽이 아니라 서로 다른 빛으로 나뉩니다. 마음이 머무는 곳을 눌러보세요.';
 document.getElementById('tourExit').onclick=()=>{
-  hide(tourPanel);hotspots.classList.remove('active');resetRoom();show(modeScreen);
+  hide(tourPanel);hotspots.classList.remove('active');resetRoom();
+  tourText.textContent=TOUR_INTRO;
+  show(modeScreen);
 };
-// 둘러보기에서는 세 자리를 보여주되 앉히지 않는다 — 예약제 규칙을 그대로 말하고 문턱으로 돌린다.
+// 둘러보기는 관람이지 입장 통로가 아니다.
+// 예전엔 자리를 누르면 문 앞으로 보내주었고, 거기서 문장을 넣으면 그대로 앉아졌다.
+// 그건 표현 명세 v2.2의 "둘러보기 — 입장 문장 없음"을 깨는 샛길이었다.
+// 이제 자리를 비추고 무슨 자리인지만 말한다. 예약한 사람은 첫 화면으로 나가서 들어온다.
 document.querySelectorAll('.spot').forEach(btn=>btn.onclick=()=>{
-  hotspots.classList.remove('active');hide(tourPanel);resetRoom();
-  show(gateScreen);
-  gateHint.textContent='이 자리에 앉는 것은 예약하신 분께 안내됩니다.';
-  setTimeout(()=>phraseInput.focus(),300);
+  const s=seats[btn.dataset.seat];
+  if(!s)return;
+  // 방은 움직이지 않는다 — 세 동그라미는 제자리에 있으므로, 방만 확대하면 자리와 어긋난다.
+  tourText.textContent=s.title+' — '+s.sub+'. 앉는 것은 예약하신 분께 안내됩니다.';
 });
 
 // issuedUuid = /api/enter가 발급한 예약 티켓. 이게 없으면 대화 API가 열리지 않는다.
